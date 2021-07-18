@@ -1,0 +1,35 @@
+h2.results {
+	margin-top:	0.5em;
+  color:      #993300;
+}
+.result-highlight, h2.results{
+	background-color:	#FFbb44 !important; /* #eea0ff #dd80ff #ddff00; */
+}
+/** http://www.the-art-of-web.com/css/format-dl/ */
+/** ? http://csscreator.com/node/37062 */
+table.results {
+	margin-bottom:		2em;
+}
+table.results tr {
+}
+table.results th {
+	text-align:		right;
+	padding-right: 0.5em;
+}
+table.results td {
+	padding-right:	0;
+	padding-bottom:	1em; /* is ignored for tr */
+}
+table.results td h2.ct {
+	clear:		none;
+	margin-top:	0;
+}
+h2.st, h2.ct, span.versenum, span.footnote_expand{
+	user-select: text;
+	-moz-user-select: text; /* For Firefox */
+	-khtml-user-select: text; /* For Safari */
+	-o-user-select: text; /* For Opera */
+	-webkit-user-select: text;
+/*behavior: url(../selectable.htc) url(selectable.htc);*/
+	behavior: none;
+}

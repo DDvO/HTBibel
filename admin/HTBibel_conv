@@ -1,0 +1,1029 @@
+#!/usr/bin/perl
+
+#cd ~/html/HTBibel; HTBibel_conv */*.html
+#rsync --exclude '*~' --exclude '.svn/' --exclude 'admin/' -va --no-owner --no-group  --delete --exclude custom.css ~/html/HTBibel/ sam:/sdcard/HTBibel
+#rsync --exclude '*~' --exclude '.svn/' --exclude 'admin/' -va --no-owner --no-group  --delete --exclude custom.css ~/html/HTBibel/ htc:/sdcard/HTBibel
+####cd ~/Per/texte/Bibel/Schlachter_2000; Schlachter2000_conv */*.html  */*{0,1,2,3,4,5,6,7,8,9}
+
+sub nbsp {
+  my $r = $_[0];
+  $r =~ s# #&nbsp;#g;
+  return $r;
+}
+
+sub nonbsp {
+  my $r = $_[0];
+  $r =~ s#&nbsp;# #g;
+  return $r;
+}
+
+sub und {
+  my $r = $_[0];
+  $r =~ s#; #.#g;
+  $r =~ s# u\. #.#g;
+  $r =~ s# und #.#g;
+  $r =~ s#\.\d+,\d+##g; #drop reference to other chapter
+  $r =~ s# bis #-#g;
+  $r =~ s#-\d+,\d+#-#g; #drop reference to other chapter
+  return $r;
+}
+
+sub book{
+  my $r = $_[0];
+  $r =~ s/ö/oe/; #for 1Kö, 2Kö, Röm
+  return $r =~ m# |\(\){0}|Kap\.# ? "" : "../$r/";
+}
+
+
+sub check_ref{
+  my $book = $_[0];
+  my $bk   = $_[1];
+  my $v    = $_[2];
+  my $vs   = $_[3];
+  my $current = $_[4];
+  if($bk eq "") {
+    $contents=$current;
+  }
+  else {
+    local $/; # enable localized slurp mode
+    undef $/;
+    $B = "../Schlachter_2000.orig/$book$bk";
+    open B, $B;
+    $contents = <B>;
+    print STDERR "Cannot open $B; referred to in $book$chap\n" unless $contents;
+    close B;
+    $bk.='.html';
+  }
+  $verses = $v.und($vs);
+  while($verses =~ m#(\d+)[ab]?[.-]?(.*?)$#) {
+    $vn = $1;
+    $verses = $2;
+    print STDERR "$book$chap: $bk?$vn missing\n" unless $contents =~ m#<span class="versenum">$vn</span>#s;
+  }
+}
+
+sub hlink{
+  my $b = $_[0]; # book
+  my $k = $_[1]; # chapter
+  my $v = $_[2]; # verse
+  my $vs= $_[3]; # verses
+  my $t = $_[4]; # text
+  my $n = $_[5]; # A capitalized and '&nbsp;' inserted, which is important for avoiding repreated calls of hlink
+  $t =~ s/^([1-5])([A-Z])/$1.$2/;
+  $t =~ s/^([0-9][,0-9])/Kap. $1/;
+  $k="29" if $t =~ m/Vers(e?) 23-25/; # reference in 2Mo 28:41
+  my $bk = $b.$k;
+  $bk = "" if $bk eq "$chap.html";
+  $bk = "" if $bk eq "../$book$chap.html";
+  check_ref($book, $bk, $v, $vs, $current);
+  if($bk ne "") {
+    $bk.='.html';
+  }
+  $vn = $v;
+  $vn =~ s#(\d+)[ab]?#$1#g;
+  $samsung=0;
+  $vmargin = ($samsung ? 0 : 1); # offset from the window top
+  $vanchor = $v eq "" ? "" : '#'.($vn > $vmargin ? ($vn-$vmargin) : "1"); #use "0" rather than "" to avoid IE7 bug
+  return ($n ?  '<A HREF="' :  '<a href="').$bk.
+          ($samsung ? '' : ($v eq "" ? '' : '?') . $v.und($vs)).
+          $vanchor.'" class="verseref">'. ($n ? nbsp($t) : $t).
+         ($n ? '</A>'       : '</a>');
+}
+
+sub iKap{ #verse with backward reference to chapter in index
+  my $r = $_[0];
+  return "" if $chap;
+  return "1" if $book_end[$book_index]==1;
+# return $1 if $r =~ m#^.* Kap\. (\d+)#; # does not work: find last "Kap. \d+"
+  reverse($r) =~ m#(\d+?) .paK#; # find last "Kap. \d+"
+  $r = reverse($1); # direct return does not work!
+  return $r;
+}
+
+sub make_links {
+  my $r = $_[0];
+  $r=~s#(\d+),(\d+(&nbsp;| )?(m|cm|kg|l)[^a-zA-Z])#$1,<i></i>$2#g; #save measures
+# $r=~s#(ca\. \d+),(\d+)#$1,<i></i>$2#g;
+  $r=~s#Kla (\d+)#Klgl $1#g;
+  $r=~s#Hi (\d+)#Hiob $1#g;
+  $r=~s#2Chr 1,18#2.Chr&nbsp;1,18#g;      #prevent hyperlink
+  $r=~s#Kap. 2,28-32#Kap.&nbsp;2,28-32#g; #prevent hyperlink
+  while($r =~ s#(Kap\.|1Mo|2Mo|3Mo|4Mo|5Mo|Jos|Ri|Ruth|1Sam|2Sam|1Kö|2Kö|1Chr|2Chr|Esr|Neh|Est|Hiob|Ps|Spr|Pred|Hld|Jes|Jer|Klgl|Hes|Dan|Hos|Joel|Am|Ob|Jona|Mi|Nah|Hab|Zeph|Hag|Sach|Mal|Mt|Mk|Lk|Joh|Apg|Röm|1Kor|2Kor|Gal|Eph|Phil|Kol|1Th|2Th|1Tim|2Tim|Tit|Phlm|Hebr|Jak|1Pt|2Pt|1Joh|2Joh|3Joh|Jud|Offb) (\d+,\d+[ab]?([\.\-]\d+[ab]?)*)(; | u\. | und )(\d+,\d+[ab]?([\.\-]\d+[ab]?)*)#$1 $2$4$1 $5#g) {} #distribute book name
+  $r=~s#( |\(\){0}|Kap\.|1Mo|2Mo|3Mo|4Mo|5Mo|Jos|Ri|Ruth|1Sam|2Sam|1Kö|2Kö|1Chr|2Chr|Esr|Neh|Est|Hiob|Ps|Spr|Pred|Hld|Jes|Jer|Klgl|Hes|Dan|Hos|Joel|Am|Ob|Jona|Mi|Nah|Hab|Zeph|Hag|Sach|Mal|Mt|Mk|Lk|Joh|Apg|Röm|1Kor|2Kor|Gal|Eph|Phil|Kol|1Th|2Th|1Tim|2Tim|Tit|Phlm|Hebr|Jak|1Pt|2Pt|1Joh|2Joh|3Joh|Jud|Offb)[
+                  ]((\d+),((\d+[ab]?)((([\.\-]| u\. | und | bis )(\d+,)?\d+[ab]?)*)))#   hlink(book($1),$3,$5,und($6),"$1 $2",1)#eg; #full ref.
+  $r=~s#( |\(\){0})((\d+),((\d+[ab]?)((([\.\-]| u\. | und | bis )(\d+,)?\d+[ab]?)*)))#$1.hlink(""      ,$3,$5,und($6),    $2 ,1)#eg; #same book
+  while($r=~ s#^(.*?[^>])(V\.|Vers|Verse|Versen)( |&nbsp;)((\d+[ab]?)((([\.\-]|; | u\. | und | bis )(\d+,)?\d+[ab]?)*))#
+                                                                               $1.hlink("",iKap($1),$5,und($6),"$2 $4",1)#eg) {} #same chap
+  $r=~s#(Kap\.|1Mo|2Mo|3Mo|4Mo|5Mo|Jos|Ri|Ruth|1Sam|2Sam|1Kö|2Kö|1Chr|2Chr|Esr|Neh|Est|Hiob|Ps|Spr|Pred|Hld|Jes|Jer|Klgl|Hes|Dan|Hos|Joel|Am|Ob|Jona|Mi|Nah|Hab|Zeph|Hag|Sach|Mal|Mt|Mk|Lk|Joh|Apg|Röm|1Kor|2Kor|Gal|Eph|Phil|Kol|1Th|2Th|1Tim|2Tim|Tit|Phlm|Hebr|Jak|1Pt|2Pt|1Joh|2Joh|3Joh|Jud|Offb)[
+                  ]((\d+)(%?%?%?%?%?((([\.\-]| u\. | und | bis )\d+%?%?%?)*)))#   hlink(book($1),$3,"",    "" ,"$1 $2",1)#eg; #entire chapter
+  $r=~s#(<A HREF="[^\"]*" class="verseref">)(.*?)(</A>)#$1.nonbsp($2).$3#ieg;
+  $r=~s#(\d+),<i></i>(\d+(&nbsp;| )?(m|cm|kg|l)[^a-zA-Z])#$1,$2#g; #restore measures
+  return $r;
+}
+
+sub footnote {
+  my $id = $_[0];
+  my $num = $_[1];
+  my $text = make_links($_[2]);
+  my $t = $text;
+  $t =~ s#&[a-z]+;# #g;
+  $t =~ s#; griech.#, griech.#g;
+  $t =~ s#(, |\()d.h.#; d.h.#g;
+# $t =~ s#</?[a-z]+>##g;
+  $t =~ s#(so auch|entsprechend|ebenso) (in )?<A HREF=.*?</A>[.;]?##g;
+  $t =~ s#so auch (im folgenden|später)[.;]##g;
+  $t =~ s#an anderen Stellen mit <i>.*?</i> übersetzt.##g;
+  my $alt = " alt" if !($t =~ m# HREF=#i) && $t =~ m#^((oder|andere[rs]?|wörtlich|Schlachter:?) [^;]+;?\s?)+$#i;
+  return '<span class="footnote'.$alt.'">['.$num.'] '.$text."<br id=\"$id\"></span>";
+}
+
+sub versenum {
+  return $_[0];
+# unused:
+  local $n = $_[0];
+  local $h = '<img alt=" " src="../images/nbsp.gif">';
+  do {
+    $h = '<img alt="'.($n % 10).'" src="../images/n'.($n % 10).'.gif">'.$h;
+    $n = int($n / 10);
+  }
+  while ($n > 0);
+  return $h;
+}
+
+sub read_books {
+  local $/; # enable localized slurp mode
+  $/="\n";
+  $i = 0;
+  open B, "index.html";
+  $book_name[$i] = "index"; $book_end [$i] = ""; # main index.html
+  while (<B>) {
+    if (m#<li><a href="(.*?)/index\.html">#) {
+      ++$i;
+      $book_name[$i] = "$1/";
+      opendir(D, $1) || die("Cannot open directory $D\n");
+      @files = readdir(D);
+      closedir(D);
+      $last_kap = 0;
+      foreach $f (@files) {
+	$last_kap = $1 if $f =~ m#^(\d+)(\.html)?$# && $1 > $last_kap;
+      }
+      $book_beg[$i] = 1;
+      $book_end[$i] = $last_kap;
+    }
+  }
+  $book_last = $i++;
+  $book_name[$i] = "index";  $book_beg [$i] = ""; # main index.html
+  close B;
+}
+
+sub read_plan {
+  local $/; # enable localized slurp mode
+  $/="\n";
+  open P, "plan.html";
+  $i = 0;
+  $plan_book[$i] = "plan";
+  $plan_end [$i] = "";
+  while (<P>) {
+    if (m#<TD><A HREF="(.*?)\.html">(.*?)(<wbr>)?( |&nbsp;|)(\d+)(<wbr>)?(-(\d+))?</A>#) {
+      ++$i;
+      my $ref = $1;
+      my $book = $2;
+      my $chap_beg = $5;
+      my $chap_end = $8;
+      $book =~ s/\.//;
+      $book =~ s/ö/oe/g; # Röm, 1Kö, 2Kö
+      print STDERR "Inconsistent book reference in line $_\n" if $ref ne "$book/$chap_beg";
+      $plan_book[$i] = "$book/";
+      $plan_beg [$i] = $chap_beg;
+      $plan_end [$i] =($chap_end eq "" ? $chap_beg : $chap_end);
+    }
+  }
+  $plan_last = $i++;
+  $plan_book[$i] = "plan";
+  $plan_beg [$i] = "";
+  close P;
+}
+
+read_books();
+read_plan();
+
+foreach(@ARGV)
+{
+  $file = $_;
+# $new = $file;
+# $new =~ s/(\d+)\/index\.html/$1.html/;
+# system "mv $file $new"
+  $orig = "../Schlachter_2000.orig/$file";
+  $orig =~ s#(\d+)\.html#$1#;
+#system "mv $orig $file";
+#  system "mv -i $file $orig";
+
+  $book_nav = "";
+  $file =~ m#^(.*?/)(.*?)\.html$# || die "Expected .html file rather than '".$file."'";
+  $book = $1;
+  $chap = $2; $chap=0 if $chap eq "index";
+  for ($book_index = 1; $book_index <= $book_last && $book_name[$book_index] ne $book; $book_index++) {}
+  if($chap) {
+    if ($book_index > $book_last) {
+      print STDERR "Cannot determine book number for $file\n";
+    } else {
+      $prev_book_chap = "../".$book_name[$book_index-1].$book_end[$book_index-1];
+      $next_book_chap = "../".$book_name[$book_index+1].$book_beg[$book_index+1];
+    }
+  }
+  $last_chap = $book_end[$book_index];
+  if ($chap) {
+    for ($plan_index = 1; $plan_index <= $plan_last && !($plan_book[$plan_index] eq $book &&
+							 $plan_beg[$plan_index] <= $chap && $chap <= $plan_end[$plan_index]); $plan_index++) {}
+    if ($plan_index > $plan_last) {
+      print STDERR "Cannot determine plan entry for $file\n";
+    } else {
+			for ($plan_index2 = $plan_index+1; $plan_index2 <= $plan_last && !($plan_book[$plan_index2] eq $book &&
+							 $plan_beg[$plan_index2] <= $chap && $chap <= $plan_end[$plan_index2]); $plan_index2++) {}
+			if ($plan_index2 <= $plan_last) {
+				print STDERR "Overlapping plan entry for $book$chap\n";
+			}
+      $plan_day = ($plan_index-1) % 7;
+      $plan_week = (($plan_index-1-$plan_day) / 7)+1;
+      $plan_before = $chap-$plan_beg[$plan_index];
+      $plan_prev = $chap-1;
+      $plan_prev = "../".$plan_book[$plan_index-1].$plan_end[$plan_index-1] if $plan_before == 0;
+      $plan_prev_hint = $plan_before == 0 ? "" : " ($plan_before) ";
+      $plan_after = $plan_end[$plan_index]-$chap;
+      $plan_next = $chap+1;
+      $plan_next = "../".$plan_book[$plan_index+1].$plan_beg[$plan_index+1] if $plan_after == 0;
+      $plan_next_hint = $plan_after == 0 ? "" : " ($plan_after) ";
+    }
+  } else {
+    $plan_index = 0;
+#    open I, "$orig";
+#    while(<I>) {
+#      $last_chap = $1 if m#<div class="contents"><a href=".*?">Kapitel (\d+)</a></div>#;
+#    }
+#    close I;
+    $CLEAR=''; #'<br style="clear:both;"><span style="clear:both;"></span>';
+    $book_nav = '<div class="book_nav">'.
+      #<form><div class="chap_text">Kapitel: </div>'.$links.'
+      '<span class="chap_jump"> <span class="quick" id="quick1"></span></span>'.$CLEAR.'</div>'."\n";
+  }
+  process_file($orig,$file);
+}
+
+
+sub process_file {
+  local $/; # enable localized slurp mode
+  undef $/;
+  open I, $_[0];
+  open O, ">$_[1]";
+  while(<I>)
+  {
+    $current = $_;
+    s#\r##g;
+    ##s#\t#  #g;
+    s#<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">#<!DOCTYPE HTML>#;
+    s#<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">#<html>#;
+    s#</p>##g if $orig =~ m#index\.html#; # bugfix
+    s#(<span class="versenum">0</span>.*?)<span class="versenum">0</span>&\#160;#$1 #s; #bugfix
+    s#(<span class="versenum">1</span>.*?)<span class="versenum">1</span>&\#160;#$1 #s; #bugfix
+    s#(<span class="versenum">2</span>.*?)<span class="versenum">2</span>&\#160;#$1 #s; #bugfix
+    s#(<span class="versenum">3</span>.*?)<span class="versenum">3</span>&\#160;#$1 #s; #bugfix
+    s#(<span class="versenum">4</span>.*?)<span class="versenum">4</span>&\#160;#$1 #s; #bugfix
+    s#(<span class="versenum">5</span>.*?)<span class="versenum">5</span>&\#160;#$1 #s; #bugfix
+    s#(<span class="versenum">6</span>.*?)<span class="versenum">6</span>&\#160;#$1 #s; #bugfix
+    s#(<span class="versenum">7</span>.*?)<span class="versenum">7</span>&\#160;#$1 #s; #bugfix
+    s#(<span class="versenum">8</span>.*?)<span class="versenum">8</span>&\#160;#$1 #s; #bugfix
+    s#(<span class="versenum">9</span>.*?)<span class="versenum">9</span>&\#160;#$1 #s; #bugfix
+    s#(<span class="versenum">10</span>.*?)<span class="versenum">10</span>&\#160;#$1 #s; #bugfix
+    s#(<span class="versenum">11</span>.*?)<span class="versenum">11</span>&\#160;#$1 #s; #bugfix
+    s#(<span class="versenum">12</span>.*?)<span class="versenum">12</span>&\#160;#$1 #s; #bugfix
+    s#(<span class="versenum">13</span>.*?)<span class="versenum">13</span>&\#160;#$1 #s; #bugfix
+    s#(<span class="versenum">14</span>.*?)<span class="versenum">14</span>&\#160;#$1 #s; #bugfix
+    s#(<span class="versenum">14</span>.*?)<span class="versenum">14</span>&\#160;#$1 #s; #bugfix
+    s#(<span class="versenum">15</span>.*?)<span class="versenum">15</span>&\#160;#$1 #s; #bugfix
+    s#(<span class="versenum">15</span>.*?)<span class="versenum">15</span>&\#160;#$1 #s; #bugfix
+    s#(<span class="versenum">16</span>.*?)<span class="versenum">16</span>&\#160;#$1 #s; #bugfix
+    s#(<span class="versenum">17</span>.*?)<span class="versenum">17</span>&\#160;#$1 #s; #bugfix
+    s#(<span class="versenum">17</span>.*?)<span class="versenum">17</span>&\#160;#$1 #s; #bugfix
+    s#(<span class="versenum">18</span>.*?)<span class="versenum">18</span>&\#160;#$1 #s; #bugfix
+    s#(<span class="versenum">18</span>.*?)<span class="versenum">18</span>&\#160;#$1 #s; #bugfix
+    s#(<span class="versenum">18</span>.*?)<span class="versenum">18</span>&\#160;#$1 #s; #bugfix
+    s#(<span class="versenum">19</span>.*?)<span class="versenum">19</span>&\#160;#$1 #s; #bugfix
+    s#(<span class="versenum">20</span>.*?)<span class="versenum">20</span>&\#160;#$1 #s; #bugfix
+    s#(<span class="versenum">21</span>.*?)<span class="versenum">21</span>&\#160;#$1 #s; #bugfix
+    s#(<span class="versenum">22</span>.*?)<span class="versenum">22</span>&\#160;#$1 #s; #bugfix
+    s#(<span class="versenum">23</span>.*?)<span class="versenum">23</span>&\#160;#$1 #s; #bugfix
+    s#(<span class="versenum">24</span>.*?)<span class="versenum">24</span>&\#160;#$1 #s; #bugfix
+    s#(<span class="versenum">25</span>.*?)<span class="versenum">25</span>&\#160;#$1 #s; #bugfix
+    s#(<span class="versenum">26</span>.*?)<span class="versenum">26</span>&\#160;#$1 #s; #bugfix
+    s#(<span class="versenum">27</span>.*?)<span class="versenum">27</span>&\#160;#$1 #s; #bugfix
+    s#(<span class="versenum">28</span>.*?)<span class="versenum">28</span>&\#160;#$1 #s; #bugfix
+    s#(<span class="versenum">29</span>.*?)<span class="versenum">29</span>&\#160;#$1 #s; #bugfix
+    s#(<span class="versenum">30</span>.*?)<span class="versenum">30</span>&\#160;#$1 #s; #bugfix
+    s#(<span class="versenum">31</span>.*?)<span class="versenum">31</span>&\#160;#$1 #s; #bugfix
+    s#(<span class="versenum">32</span>.*?)<span class="versenum">32</span>&\#160;#$1 #s; #bugfix
+    s#(<span class="versenum">33</span>.*?)<span class="versenum">33</span>&\#160;#$1 #s; #bugfix
+    s#(<span class="versenum">34</span>.*?)<span class="versenum">34</span>&\#160;#$1 #s; #bugfix
+    s#(<span class="versenum">35</span>.*?)<span class="versenum">35</span>&\#160;#$1 #s; #bugfix
+    s#(<span class="versenum">36</span>.*?)<span class="versenum">36</span>&\#160;#$1 #s; #bugfix
+    s#(<span class="versenum">37</span>.*?)<span class="versenum">37</span>&\#160;#$1 #s; #bugfix
+    s#(<span class="versenum">38</span>.*?)<span class="versenum">38</span>&\#160;#$1 #s; #bugfix
+    s#(<span class="versenum">39</span>.*?)<span class="versenum">39</span>&\#160;#$1 #s; #bugfix
+    s#(<span class="versenum">40</span>.*?)<span class="versenum">40</span>&\#160;#$1 #s; #bugfix
+    s#(<span class="versenum">41</span>.*?)<span class="versenum">41</span>&\#160;#$1 #s; #bugfix
+    s#(<span class="versenum">42</span>.*?)<span class="versenum">42</span>&\#160;#$1 #s; #bugfix
+    s#(<span class="versenum">43</span>.*?)<span class="versenum">43</span>&\#160;#$1 #s; #bugfix
+    s#(<span class="versenum">44</span>.*?)<span class="versenum">44</span>&\#160;#$1 #s; #bugfix
+    s#(<span class="versenum">45</span>.*?)<span class="versenum">45</span>&\#160;#$1 #s; #bugfix
+    s#(<span class="versenum">46</span>.*?)<span class="versenum">46</span>&\#160;#$1 #s; #bugfix
+    s#(<span class="versenum">47</span>.*?)<span class="versenum">47</span>&\#160;#$1 #s; #bugfix
+    s#(<span class="versenum">48</span>.*?)<span class="versenum">48</span>&\#160;#$1 #s; #bugfix
+    s#(<span class="versenum">64</span>.*?)<span class="versenum">64</span>&\#160;#$1 #s; #bugfix
+
+     s#1_chronik/#1Chr/#g;
+     s#1_johannes/#1Joh/#g;
+     s#1_koenige/#1Koe/#g;
+     s#1_korinther/#1Kor/#g;
+     s#1_mose/#1Mo/#g;
+     s#1_petrus/#1Pt/#g;
+     s#1_samuel/#1Sam/#g;
+     s#1_thessalonicher/#1Th/#g;
+     s#1_timotheus/#1Tim/#g;
+     s#2_chronik/#2Chr/#g;
+     s#2_johannes/#2Joh/#g;
+     s#2_koenige/#2Koe/#g;
+     s#2_korinther/#2Kor/#g;
+     s#2_mose/#2Mo/#g;
+     s#2_petrus/#2Pt/#g;
+     s#2_samuel/#2Sam/#g;
+     s#2_thessalonicher/#2Th/#g;
+     s#2_timotheus/#2Tim/#g;
+     s#3_johannes/#3Joh/#g;
+     s#3_mose/#3Mo/#g;
+     s#4_mose/#4Mo/#g;
+     s#5_mose/#5Mo/#g;
+     s#amos/#Am/#g;
+     s#apostelgeschichte/#Apg/#g;
+     s#daniel/#Dan/#g;
+     s#epheser/#Eph/#g;
+     s#esra/#Esr/#g;
+     s#esther/#Est/#g;
+     s#galater/#Gal/#g;
+     s#habakuk/#Hab/#g;
+     s#haggai/#Hag/#g;
+     s#hebraeer/#Hebr/#g;
+     s#hesekiel/#Hes/#g;
+     s#hiob/#Hiob/#g;
+     s#hoheslied/#Hld/#g;
+     s#hosea/#Hos/#g;
+     s#jakobus/#Jak/#g;
+     s#jeremia/#Jer/#g;
+     s#jesaja/#Jes/#g;
+     s#joel/#Joel/#g;
+     s#johannes/#Joh/#g;
+     s#jona/#Jona/#g;
+     s#josua/#Jos/#g;
+     s#judas/#Jud/#g;
+     s#klagelieder/#Klgl/#g;
+     s#kolosser/#Kol/#g;
+     s#lukas/#Lk/#g;
+     s#maleachi/#Mal/#g;
+     s#markus/#Mk/#g;
+     s#matthaeus/#Mt/#g;
+     s#micha/#Mi/#g;
+     s#nahum/#Nah/#g;
+     s#nehemia/#Neh/#g;
+     s#obadja/#Ob/#g;
+     s#offenbarung/#Offb/#g;
+     s#philemon/#Phlm/#g;
+     s#philipper/#Phil/#g;
+     s#prediger/#Pred/#g;
+     s#psalm/#Ps/#g;
+     s#richter/#Ri/#g;
+     s#roemer/#Roem/#g;
+     s#ruth/#Ruth/#g;
+     s#sacharja/#Sach/#g;
+     s#sprueche/#Spr/#g;
+     s#titus/#Tit/#g;
+     s#zephanja/#Zeph/#g;
+     s#index\.htm"#index.html"#g;
+     s#altes_testament/index\.html#old.html#g;
+     s#neues_testament/index\.html#new.html#g;
+
+     s#Suchfunktionen#Suche#g;
+     s#([()> ])at\.#$1alttestamentl.#g;
+     s#([()> ])bed\.#$1bedeutet#g;
+     s#([()> ])bes\.#$1besonders#g;
+     s#([()> ])eig\.#$1eigentlich#g;
+     s#([()> ])Fn(\.? )#$1Fußnote #g;
+     s#([()> ])Gr\.#$1Griech.#g;
+#    s#([()> ])Hebr\.#$1Hebr.#g;
+     s#([()> ])gr\.#$1griech.#g;
+     s#([()> ])nt\.#$1neutestamentl.#g;
+     s#([()> ])od\.#$1oder#g;
+     s#([()> ])V\.&\#160;#$1V. #g;
+     s#([()> ])V\. (\d+-\d+)#$1Vers $2#g;
+     s#([()> ])V\. (\d+; \d+)#$1Verse $2#g;
+     s#([()> ])V\.#$1Vers#g;
+     s#([()> ])verm\.#$1vermutlich#g;
+     s#([()> ])w\.#$1wörtlich#g;
+
+     s#(</i>&\#160;)(<i>)(/ )#$1$3$2#g;
+     s#(<i>)(&raquo;)(.*?)(&laquo;)(</i>)#$2$1$3$5$4#g;
+		 s#</i>&\#160;<i>&hellip;</i># &hellip;</i>#g;
+     s#([ .,:;])(</i>)#$2$1#g;     s#(&[a-z]+)(</i>)(;)#$1$3$2#g;
+     s#(<i>[^(<>]+)([)])(</i>)#$1$3$2#g;
+
+    s#<div class="para"></div>##g;
+    s#http://www.way2god.org##g;
+    s#(<title>.*?|index.html">)Die Bibel#$1HTBibel#g;
+#   s#Bibeltext der Schlachter#Text der Schlachter-Bibel#g;
+    s#Genfer Bibelgesellschaft#<A HREF="http://www.bibelgesellschaft.com/">Genfer Bibelgesellschaft</A>#g;
+#   s#(Wiedergegeben mit freundlicher Genehmigung. Alle Rechte vorbehalten.)#<!--$1-->#g;
+    s#Sie sind hier: ##g;
+#   s#Way2God.org - Logo#[logo]#g;
+    s#\t*<div class="fix"></div>\n?##g;
+    if ($file =~ m#/\d+\.html$#) {
+      print STDERR "$1\n" if m@(<a href="([^\d.].*?)>)@ && $2 =~ m@"index.html#"@;
+      s@<a href="(\d+)\.html(#hl)?">(.*?)</a>@hlink("","",$1,"" ,$3,0)@eg; #verseref in same chapter
+      s#(["'])\.\./#$1#g;
+    }
+    s#(<form method="get".*?</form>\n)##g; #"<!--$1-->"
+    s#<form action="../lookup" method="get">##g; #(move <form> to inside chap_jump)     #s# \+ '/index\.html'#+'.html'#g; # <div class="chap_nav">
+    s#\n&middot;\nSchnellauswahl: <select .*?</select># <span class="quick" id="quick1"></span>#s;
+    s#\n&middot;\nSchnellauswahl: <select .*?</select># <span class="quick" id="quick2"></span>#s;
+    s#\n\t+<div id="functions">.*?</div>\s*##s;
+    s#\n\s*<div id="tagline"></div>[ \t]*##s;
+    s#(<div id="menupad">)\n\t+\n\n<div>\n</div>#$1#s;
+    s@<span id="active" style="color:#993300"><strong>(.*?) style="color:#993300"(.*?)</strong></span>@<span class="active">$1$2</span>@g;
+    s@<div class="menusection" style="color:#333333;border-left-color:#333333;">@<div class="menusection menusection1">@g;
+    s@<div class="menusection" style="color:#993300;border-left-color:#993300;">@<div class="menusection menusection2">@g;
+#   s#<div class="menusection menusection1">\n<ul><li><a href="(\.\.\/)?../index\.html" title="Homepage">Homepage</a></li></ul></div>##<!--<li><a href="$1../index.html" title="Home">Home</a></li>-->#g;
+    s#<div class="menusection menusection1">.*?</div>##sg;
+    s#(<li>)<span class="tree[02]">(.*?)</span>(</li>)?#$1$2$3#g;
+    s#<li><a href=".*?" title="HTBibel">HTBibel</a>\n<ul>##s;
+    if (s#</li>
+	(<li>(<span class="active">)?<a href="[^\"]*" title="Neues Testament">Neues Testament</a>(</span>)?)(.*?title="Offenbarung">Offenbarung</a>(</span>)?</span></li>
+</ul>)
+</li>
+	<li><span class="tree1"><a href="../search.htm" title="Suche">Suche</a></span></li></ul></li>#
+<ul>
+		<li><span class="tree2"><a href="../1Mo/index.html" title="1. Mose">1. Mose</a></span></li>
+		<li><span class="tree2"><a href="../2Mo/index.html" title="2. Mose">2. Mose</a></span></li>
+		<li><span class="tree2"><a href="../3Mo/index.html" title="3. Mose">3. Mose</a></span></li>
+		<li><span class="tree2"><a href="../4Mo/index.html" title="4. Mose">4. Mose</a></span></li>
+		<li><span class="tree2"><a href="../5Mo/index.html" title="5. Mose">5. Mose</a></span></li>
+		<li><span class="tree2"><a href="../Jos/index.html" title="Josua">Josua</a></span></li>
+		<li><span class="tree2"><a href="../Ri/index.html" title="Richter">Richter</a></span></li>
+		<li><span class="tree2"><a href="../Ruth/index.html" title="Ruth">Ruth</a></span></li>
+		<li><span class="tree2"><a href="../1Sam/index.html" title="1. Samuel">1. Samuel</a></span></li>
+		<li><span class="tree2"><a href="../2Sam/index.html" title="2. Samuel">2. Samuel</a></span></li>
+		<li><span class="tree2"><a href="../1Koe/index.html" title="1. Könige">1. Könige</a></span></li>
+		<li><span class="tree2"><a href="../2Koe/index.html" title="2. Könige">2. Könige</a></span></li>
+		<li><span class="tree2"><a href="../1Chr/index.html" title="1. Chronik">1. Chronik</a></span></li>
+		<li><span class="tree2"><a href="../2Chr/index.html" title="2. Chronik">2. Chronik</a></span></li>
+		<li><span class="tree2"><a href="../Esr/index.html" title="Esra">Esra</a></span></li>
+		<li><span class="tree2"><a href="../Neh/index.html" title="Nehemia">Nehemia</a></span></li>
+		<li><span class="tree2"><a href="../Est/index.html" title="Esther">Esther</a></span></li>
+		<li><span class="tree2"><a href="../Hiob/index.html" title="Hiob">Hiob</a></span></li>
+		<li><span class="tree2"><a href="../Ps/index.html" title="Psalmen">Psalmen</a></span></li>
+		<li><span class="tree2"><a href="../Spr/index.html" title="Sprüche">Sprüche</a></span></li>
+		<li><span class="tree2"><a href="../Pred/index.html" title="Prediger">Prediger</a></span></li>
+		<li><span class="tree2"><a href="../Hld/index.html" title="Hoheslied">Hoheslied</a></span></li>
+		<li><span class="tree2"><a href="../Jes/index.html" title="Jesaja">Jesaja</a></span></li>
+		<li><span class="tree2"><a href="../Jer/index.html" title="Jeremia">Jeremia</a></span></li>
+		<li><span class="tree2"><a href="../Klgl/index.html" title="Klagelieder">Klagelieder</a></span></li>
+		<li><span class="tree2"><a href="../Hes/index.html" title="Hesekiel">Hesekiel</a></span></li>
+		<li><span class="tree2"><a href="../Dan/index.html" title="Daniel">Daniel</a></span></li>
+		<li><span class="tree2"><a href="../Hos/index.html" title="Hosea">Hosea</a></span></li>
+		<li><span class="tree2"><a href="../Joel/index.html" title="Joel">Joel</a></span></li>
+		<li><span class="tree2"><a href="../Am/index.html" title="Amos">Amos</a></span></li>
+		<li><span class="tree2"><a href="../Ob/index.html" title="Obadja">Obadja</a></span></li>
+		<li><span class="tree2"><a href="../Jona/index.html" title="Jona">Jona</a></span></li>
+		<li><span class="tree2"><a href="../Mi/index.html" title="Micha">Micha</a></span></li>
+		<li><span class="tree2"><a href="../Nah/index.html" title="Nahum">Nahum</a></span></li>
+		<li><span class="tree2"><a href="../Hab/index.html" title="Habakuk">Habakuk</a></span></li>
+		<li><span class="tree2"><a href="../Zeph/index.html" title="Zephanja">Zephanja</a></span></li>
+		<li><span class="tree2"><a href="../Hag/index.html" title="Haggai">Haggai</a></span></li>
+		<li><span class="tree2"><a href="../Sach/index.html" title="Sacharja">Sacharja</a></span></li>
+		<li><span class="tree1"><a href="../Mal/index.html" title="Maleachi">Maleachi</a></span></li>
+</ul>	</li>
+#s) {$NT = "$1$4</li>";
+      $AT_active='"activ_"'; #unused
+      $NT_active='"active"';
+#	    $NT =~ s#<li><span class="tree0">#<li><span class="tree3">#g;
+}
+    else {
+      $AT_active='"active"'; #unused
+      $NT_active='"activ_"';
+      $NT = '<li><a href="../new.html" title="Neues Testament">Neues Testament</a>
+<ul>
+		<li><span class="tree2"><a href="../Mt/index.html" title="Matthäus">Matthäus</a></span></li>
+		<li><span class="tree2"><a href="../Mk/index.html" title="Markus">Markus</a></span></li>
+		<li><span class="tree2"><a href="../Lk/index.html" title="Lukas">Lukas</a></span></li>
+		<li><span class="tree2"><a href="../Joh/index.html" title="Johannes">Johannes</a></span></li>
+		<li><span class="tree2"><a href="../Apg/index.html" title="Apostelgeschichte">Apostelgeschichte</a></span></li>
+		<li><span class="tree2"><a href="../Roem/index.html" title="Römer">Römer</a></span></li>
+		<li><span class="tree2"><a href="../1Kor/index.html" title="1. Korinther">1. Korinther</a></span></li>
+		<li><span class="tree2"><a href="../2Kor/index.html" title="2. Korinther">2. Korinther</a></span></li>
+		<li><span class="tree2"><a href="../Gal/index.html" title="Galater">Galater</a></span></li>
+		<li><span class="tree2"><a href="../Eph/index.html" title="Epheser">Epheser</a></span></li>
+		<li><span class="tree2"><a href="../Phil/index.html" title="Philipper">Philipper</a></span></li>
+		<li><span class="tree2"><a href="../Kol/index.html" title="Kolosser">Kolosser</a></span></li>
+		<li><span class="tree2"><a href="../1Th/index.html" title="1. Thessalonicher">1. Thessalonicher</a></span></li>
+		<li><span class="tree2"><a href="../2Th/index.html" title="2. Thessalonicher">2. Thessalonicher</a></span></li>
+		<li><span class="tree2"><a href="../1Tim/index.html" title="1. Timotheus">1. Timotheus</a></span></li>
+		<li><span class="tree2"><a href="../2Tim/index.html" title="2. Timotheus">2. Timotheus</a></span></li>
+		<li><span class="tree2"><a href="../Tit/index.html" title="Titus">Titus</a></span></li>
+		<li><span class="tree2"><a href="../Phlm/index.html" title="Philemon">Philemon</a></span></li>
+		<li><span class="tree2"><a href="../Hebr/index.html" title="Hebräer">Hebräer</a></span></li>
+		<li><span class="tree2"><a href="../Jak/index.html" title="Jakobus">Jakobus</a></span></li>
+		<li><span class="tree2"><a href="../1Pt/index.html" title="1. Petrus">1. Petrus</a></span></li>
+		<li><span class="tree2"><a href="../2Pt/index.html" title="2. Petrus">2. Petrus</a></span></li>
+		<li><span class="tree2"><a href="../1Joh/index.html" title="1. Johannes">1. Johannes</a></span></li>
+		<li><span class="tree2"><a href="../2Joh/index.html" title="2. Johannes">2. Johannes</a></span></li>
+		<li><span class="tree2"><a href="../3Joh/index.html" title="3. Johannes">3. Johannes</a></span></li>
+		<li><span class="tree2"><a href="../Jud/index.html" title="Judas">Judas</a></span></li>
+		<li><span class="tree1"><a href="../Offb/index.html" title="Offenbarung">Offenbarung</a></span></li>
+</ul></li>';
+    }
+    if($file =~ m#plan\.html#) { # not used anymore
+      $plan_active='"active"';
+    } else {
+      $plan_active='"activ_"';
+    }
+#   s#\t<li><span class="tree1">((<span class="active">)?<a href=")(\.\./)?search\.htm(" title="Suche">Suche</a>(</span>)?</span></li>)</ul></li></ul></div>\n#\t<li><span class="tree2">$plan_active<a href="$3plan.html" title="Leseplan">Leseplan</a></span></span></li>
+#\t<li><span class="tree2">$1$3search.html$4
+#\t<li><span class="tree1"><a href="$3about.html" title="Infos">Infos</a></span></li>
+#\t</ul></li>
+#</ul>
+#\t\t\t\t</div>#sg;
+    s#
+	<li><a href=".*?" title="Neues Testament">Neues Testament</a></li>
+	<li><span class="tree1">((<span class="active">)?<a href=")(\.\./)?search\.htm(" title="Suche">Suche</a>(</span>)?</span></li>)</ul></li></ul></div>\n#
+</ul>
+\t\t\t\t</div>#sg;
+$plan="$3plan";
+$search="$3search";
+
+    s#<div id="main">#<div tabindex="-1" id="main">#s; # http://stackoverflow.com/questions/6823876/skip-focus-from-tab-jump
+    s#(<div id="header">.*?</div>)##s; s#\n(\t*<div id="content">)\n#
+$1
+\t\t\t\t<div id="header">\n#; print STDERR "Expected chap_num for $file\n" if $chap &&
+      !s#((<div class="para">)(.*?)(</div>))?(<div class="chap_num">\d+</div>)\n?(<div class="para">)#"$CLEAR\n\t\t\t\t</div><!--header-->\n".($1 ? "$2$3" : "<p></p>").($1 ? "" : "\n$6")."$5\n"#se && #puts an empty p and moves para out of chap_num if h2 is missing at the chapter top, otherwise removes superfluous </div> ... <div class="para">
+      !s#(<div class="para">)(<h2.*?Psalm \d+.*?</h2>)#"$CLEAR\n\t\t\t\t</div><!--header-->\n$1$2<div class=\"chap_num\"></div>\n"#se; #for psalms, inserts empty chap_num [NO and moves <div class="para"> past chap_num]
+    s#<div class="chap_nav">#CHAP_NAV_START#;
+      #<li><span class="tree4"><a href="$search.html" title="Suche">Suche</a></span></li>
+      #<li><span class="tree2">$AT_active<a href="../AT/index.html" title="Altes Testament">Altes Testament</a></span></span></li>
+    s#(<div id="footer">.*?</div>)##s; s#(<div class="chap_nav">)#\t\t\t\t<div id="footer">$1#; $closing = ($chap ? "footer" : "header");
+    s#\n(<div class="bible_copyright">.*?</div>)(\n\t*</div>)(\n\t*</div>)(\n\t*</div>)\n#\n\t\t\t\t</div><!--$closing-->$2<!--content-->
+			$1$3<!--main-->$4<!--page-->#s;
+    s#CHAP_NAV_START#<div class="chap_nav">#;
+    s#\t*<div id="menu">.*?\n\s*<div id="submenu"></div>[ \t]*\n\t\t</div>\n##s;
+#		<div class="menu" id="menu1">#s;
+    s#\n\s*<div id="submenu"></div>[ \t]*##s; #not applicable anymore
+#    s#(<div id="main">)#<div  class="menu" id="menu2">
+#		</div><!--menu2-->
+#		$1#s;
+#\t\t\t<div id="menupad">\n\t\t\t\t<div class="menusection menusection2">
+#<ul>
+#$NT
+#</ul>
+#				</div>
+#			</div>
+
+    s#&\#160;#&nbsp;#g;
+    s# />#>#g; #no XHTML / SHORTTAG YES
+    s#(<title>.*?)&mdash;#$1-#;
+    s#(<h2 class="st">.*?)ß#$1ss#g; # transcribe szlig when in small caps
+    s#<meta http-equiv="Content-language" content="de">\n##;
+    s#<meta name="date" content=".*?">\n##;
+
+    #http://docstore.mik.ua/orelly/webprog/jscript/ch12_03.htm Execution of JavaScript Programs
+    s#[\r\n]?(<script type="text/javascript">.*?</script>)[\r\n]*##sg;
+    s#(<meta name="robots" content="index,follow">)([\r\n])#$1$2<meta name="viewport" content="initial-scale=1.0, minimum-scale=0.2, maximum-scale=2.5, user-scalable=yes">$2#sg;
+    s#<link rel="shortcut icon" type="image/x-icon" (href=")../(../)?index\.html(">)#<link rel=\"shortcut icon\" $1$2images/icon.ico$3
+<script type="text/javascript" src="../scripts.js"></script>#g;
+
+    #    s#<a href=\"../index\.htm\">Die Bibel</a>#<strong>Die Bibel</strong>#g;
+
+#<form name="search" action="javascript:var query = document.getElementById('query0').value; document.location.href='../search.html'; alert(document.title); s='search()';"><p>Suche:
+#<input id="query0"     class="text"   type="text">
+#<input value="suchen" class="button" type="submit">
+#</form>
+#<!--self.document.getElementById('query').setAttribute('value',query); -->
+
+#    s#<h1>Suche</h1>#<h1>Suche</h1>
+#<form name="search"   action="javascript:search();"><p>Suche:
+#<input value="löschen" class="button button2" onclick="clearR(); reset(); return false;">
+#<input id="query"       class="text"   type="text">
+#<input value="suchen"   class="button" type="submit">
+#<input id="meta"        class="button" type="checkbox"> auch Metatext</p>
+#</form>
+#<script src="search.js"></script>
+#<noscript><span class="error">Damit die Suche funktioniert, bitte <a href="http://www.enable-javascript.com/de/">JavaScript aktivieren</a>.</span><p></noscript>#g;
+    #<form  name="search" action="javascript:alert(document.search.text.value);"><input name="text" type="text" class="text">
+    #<form  name="search" onsubmit="alert(document.search.text.value); return false;"><input name="text" type="text" class="text" onfocus="this.select();"/>
+    #<form  name="search" ><input name="text" type="text" class="text" onfocus="this.select();"/>
+    #s#<h2>Suchergebnisse für &raquo;QUERY&laquo;</h2><p><a href="URL">DESC</a> VERSE <span class="highlight">QUERY</span></p>#<script src="search.js"></script><div id="results"></div>#g;
+
+		sub tweaknl { my $s = $_[0]; $s =~ s/(<h2 class="ct">|<h2 class="st">)/\n\n$1/g; return $s; }
+    s# ?(((<h2 class="[cs]t">[^\n]*?</h2>|<p class="cr">[^\n]*?</p>\n)*)(</div>)?\n?((<div class="chap_num">\d+</div>\n)?(<div class="para">)?)\n?)(<span class="versenum">)(\d+)(</span>)&nbsp;#($9 > 1 ? "</SPAN>\n" : "").(($3 eq "" || $4 || $7) ? "" : '</div>').tweaknl($2).(($4 || $7) ? "$4\n\n$7" : ($3 eq "" ? "" : "\n".'<div class="para">'))."\n<A NAME=\"$9\"></A><span class=\"versenum\">".versenum($9)."</span><SPAN ID=\"v$9\">"#seg; # unselectable=\"on\"
+    s#<div class="para"></div>\n?##g; # remove at beginning of chapter
+    s#\n(\n<A NAME)#$1#g;
+
+#    s#\s?((<div class="para">)?(<h2 class="ct">[^\n]*?</h2>)?(<p class="cr">[^\n]*?</p>\n)?(</div>\n?(<div class="chap_num">\d+))?(</div>\n?<div class="para">\n?)?)(<span class="versenum">(\d+)</span>&nbsp;)#($9 > 1 ? "</SPAN>" : "").
+#($1 ? "\n".($3 ? $3 : ($5 ? "<p></p>" : ""))."$4$6$7" : ""). #inserts \n, puts an empty paragraph if the h2 is missing at the chapter top, removes any superfluous <div class="para">...</div>
+#($9 > 1 ? "\n" : "")."<A NAME=\"$9\"></A>$8<SPAN ID=\"v$9\">".($9==1 && ($5 eq "" ||          1)? ((print STDERR "Expected chap_num for $file, \$1=$1\n") ? "" : "") : "")#seg;
+    s# ?(</div>\s*<div id="footer">)#</SPAN>\n$1#sg;
+
+#   s#"index\.html#"#"#"#g; # note: sometimes footnote popup on onmouseover does not work :-(
+    s#<span class="footnote"><a href="index\.html\#" class="footnote_link" onmouseover="document.getElementById\('(fn\d+)'\).style.display='inline';return false;">\[(\d+)\]</a><span class="footnote_container"><span id="fn\d+" class="footnote_text">(.*?)\n<div class="footnote_close">\[<a href="index\.html\#" onmouseover="document.getElementById\('fn\d+'\).style.display='none';return false;">schließen</a>\]</div></span></span></span>#footnote($1,$2,$3)#seg; # Metatext footnotes in $chap
+
+#   s#([ \t]+</div>\n[ \t]+<div class="para">)#<script src="../scripts.js"></script>\n<noscript><span class="error">Damit die Markierung von Versen funktioniert, bitte JavaScript <a href="http://jumk.de/javascript.html">aktivieren</a>.</span><p></noscript>\n$1#s if $chap;
+
+    @DAYS = (Montag,Dienstag,Mittwoch,Donnerstag,Freitag,Samstag,Sonntag);
+    s#<body onload="if\(self!=top\)top.location=self.location;">#<body lang="de" onload="initpage($chap,$last_chap,$plan_index);">
+	<noscript><span class="error">Damit die Menüs, Fußnoten, Versmarkierungen, Merker, Leseplan-Datum usw. funktionieren, bitte JavaScript <a href="http://www.enable-javascript.com/de/">aktivieren</a>.</span></noscript>#;  ## remove frame breakout, add init stuff
+    s#<div id="page">#<div id="menu" class="menupad">
+		<span id="index"  class="menutop"       ><a class="activ_" href="../index.html"  title="Startseite">HTBibel</a> </span>
+		<span id="old"    class="menutop middot"><a class="activ_" href="../old.html"    title="Altes Testament">AT</a> </span>
+		<span id="new"    class="menutop middot"><a class="activ_" href="../new.html"    title="Neues Testament">NT</a> </span>
+		<span id="search" class="menutop middot"><a class="activ_" href="../search.html" title="Textsuche">Suche</a>    </span>
+		<span id="plan"   class="menutop middot"><a class="activ_" href="../plan.html"   title="Leseplan">Plan</a>      </span>
+		<span id="about"  class="menutop middot"><a class="activ_" href="../about.html"  title="Informationen">Infos</a></span>
+	</div>
+	<div id="page">#g;
+#   $crumbsymbol = "&#8227;"; #Triangle Bullet
+    $crumbsymbol = "&#187;";  #Right Angle Quote
+    s#&gt;#$crumbsymbol#g;
+#   s#Altes Testament#Altes&nbsp;Testament#g;
+#   s#Neues Testament#Neues&nbsp;Testament#g;
+    s#<strong>Psalmen</strong>#<strong>Psalm</strong>#g;
+    s#(<div id="breadcrumbs">)(.*?)<strong>(.*?)</strong>(</div>)#
+$1
+	<span id="book">$2<span class="current">$3 $chap</span></span>
+	<span id="planinfo"><span class="nowrap"><a href="../plan.html">Leseplan</a> $crumbsymbol <span class="current">Woche $plan_week $crumbsymbol </span></span> <span class="nowrap"><span class="current">@DAYS[$plan_day]</span> <span id="plandate"></span></span></span>
+$4#g if $chap;
+    if($book_nav) {
+      s#(<h2>Einführung</h2>)<p>(.*?)(<h2>)#$book_nav.$1."\n".make_links($2).$3#eg; # Metatext introduction not in $chap
+    }
+    else {
+      s#<h1>(.*)</h1>#<h1 class="chapter">$1</h1>#;
+    }
+    $backsymbol = '<span class="arrow">&larr;</span>'; #"\xe2\x87\xa6"; #LEFTWARDS WHITE ARROW
+    $forwsymbol = '<span class="arrow">&rarr;</span>'; #"\xe2\x87\xa8"; #RIGHTWARDS WHITE ARROWK
+    if($chap) {
+      s#<br style="clear:right;">(</div><div class="chap_nav">)#\n$1#g;
+      s#<div style="float:left;">Kapitel:&nbsp;</div>#<span class="chap_links">#g;
+      s#<div class="chap_links">#\n<span class="chap_links">#g;
+      s#<div class="chap_active">#<div class="chap_link active">#g;
+      s#<div (class="chap_link.*?)</div>#<span $1</span>#g;
+			s#(<p class="cr">[^\n]*?)(</p>)#$1 &nbsp;&nbsp; $2#g;# whitespace is workaround for enabling line breaking for pinch-to-zoom on Android
+      s#<div (class="chap_)float">(.*?)</div># <span $1dots"> $2 </span> #g; # whitespace is workaround for enabling line breaking for pinch-to-zoom on Android
+      s#<div class="chap_jump"># &nbsp;&nbsp; </span>\n<span class="chap_jump">#g; # end of chap_links; (move <form> inside chap_jump) # whitespace is workaround for enabling line breaking for pinch-to-zoom on Android
+      s#</div></form>#</span>#g; # (end of chap_jump; move </form> inside chap_jump)
+      s#(</div>)<br style="clear:right;"></div>#</div>\n$1\n$CLEAR$2\n#g; # at end of footer
+			$workaround = " &nbsp; "; # whitespace is workaround for enabling line breaking for pinch-to-zoom on Android
+      s#<div class="chap_nav">(<a href="(\d+)/index\.html">&lt; Vorheriges Kapitel</a>)?( \| )?(<a href="(\d+)/index\.html">Nächstes Kapitel $crumbsymbol</a>)?</div>#'
+<div class="chap_nav">
+<span class="backward">'.
+'<a href="'.$plan_prev.'.html">'.$backsymbol.$plan_prev_hint."Leseplan</a> &middot; ".
+'<a href="'.($1 ?   $2.'.html">'.$backsymbol."Kapitel"
+     : $prev_book_chap.'.html">'.($prev_book_chap eq "../index" ?
+          'Inhaltsverzeichnis' : $backsymbol."Buch")).'</a></span>'.$workaround.'
+<span class="forward">'.
+'<a href="'.($4 ?   $5.'.html">'."Kapitel".$forwsymbol
+     : $next_book_chap.'.html">'.($next_book_chap eq "../index" ?
+          'Inhaltsverzeichnis' : "Buch".$forwsymbol)).'</a> &middot; '.
+'<a href="'.$plan_next.'.html">'."Leseplan".$plan_next_hint.$forwsymbol.'</a></span>
+</div>'#eg;
+    }
+    s@(<a href="\d+)/index(\.html">\d+</a>)@"$1CHAP_LINK$2"@eg; # chap_link
+    s@<a href="(\.\./[1-5_a-zA-Z]+/)?(\d+)/(\d+)(/index)?([^-]*?)\.html(#hl)?">(.*?)</a>@hlink($1,$2,$3,$5 ,$7,0)@eg;
+    s@<a href="(\.\./[1-5_a-zA-Z]+/)?(\d+)/index\.html">(.*?)</a>@                       hlink($1,$2,"","" ,$3,0)@eg; # must not be before chap_nav handling
+    s@<a href="(\d+)\.html(#hl)?">(.*?)</a>@                                             hlink("",$1,"","" ,$3,0)@eg; # must not be before chap_nav handling??
+#   s@<a href="(\d+)\.html(#hl)?">(.*?)</a>@                                             hlink("","",$1,"" ,$3,0)@eg; # must not be before chap_nav handling??
+    s@<a href="(\.\./[1-5_a-zA-Z]+/)?(\d+)\.html(#hl)?">(.*?)</a>@                       hlink($1,$2,"","" ,$4,0)@eg; # must not be before chap_nav handling??
+    s@<a href="(\.\./[1-5_a-zA-Z]+/)?(\d+)/(\d+)-(\d+),(\d+)\.html(#hl)?">(.*?)</a>@     hlink($1,$2,$3,"-",$7,0)@eg;
+    s@<a href="(\.\./[1-5_a-zA-Z]+/)?(\d+)/(\d+)(([-\.]\d+)+)\.html(#hl)?">(.*?)</a>@    hlink($1,$2,$3,$4 ,$7,0)@eg;
+    s@<a href="(\.\./[1-5_a-zA-Z]+/)?(\d+)/(\d+)(-\d+)\.html(#hl)?">(.*?)</a>@           hlink($1,$2,$3,$4 ,$6,0)@eg;
+    s#CHAP_LINK##eg; # chap_link
+    if (s#(<div class="contents">.*?</ul>\s*</div>)#CONTENTS_LISTS#s) {
+      $contents = $1;
+      while ($contents =~ s@(<a href="\d+\.html\?\d+)(#\d*">[^<]*</a></li>\n*<li><a href="\d+\.html\?(\d+))@$1.'-'.($3-1).$2@sie) {}
+      while ($contents =~ s@(<a href="\d+\.html\?\d+)(#\d*">[^<]*</a></li>\n*</ul>)@$1.'-'.$2@sie) {}
+#     $saved_contents =~ s#(\d+)/index\.html"#$1.html"#g; #etc.
+      s#CONTENTS_LISTS#$contents#e;
+    }
+
+     s#(warten\. )#$1.footnote('DvO1',"101","Jesus zitiert diese Stelle in Mt 12,18-21.")#se if m#fn166#; #in Jes 42,4
+     s#(Hindin)#$1.footnote('DvO2',"102","Hirschkuh")#se if m#fn57#; #in Jer 14,5
+     s#(Das Ephod)( sollen)#$1.footnote('DvO3',"103","Priesterschurz. Das hebräische Wort bedeutet &raquo;Umbund&laquo.").$2#se if m#fn96#; #in 2Mo 28,6  #hat die Bedeutung von &raquo;anlegen&laquo, &raquo;umbinden&laquo oder 
+
+#    s#( |;|>)daß( |,|&|<)#$1dass$2#g;
+     s#([^a-zA-Z])abgefaßt([^a-z])#$1abgefasst$2#g;
+     s#([^a-zA-Z])abläßt([^a-z])#$1ablässt$2#g;
+     s#([^a-zA-Z])abriß([^a-z])#$1abriss'.$2#g;
+     s#([^a-zA-Z])abschloß([^a-z])#$1abschloss$2#g;
+     s#([^a-zA-Z])Abschluß([^a-z])#$1Abschluss$2#g;
+     s#([^a-zA-Z])Abschlußbotschaften([^a-z])#$1Abschlussbotschaften$2#g;
+     s#([^a-zA-Z])Abschlußteil([^a-z])#$1Abschlussteil$2#g;
+     s#([^a-zA-Z])Amboß([^a-z])#$1Amboss$2#g;
+     s#([^a-zA-Z])angepaßt([^a-z])#$1angepasst$2#g;
+     s#([^a-zA-Z])Anlaß([^a-z])#$1Anlass$2#g;
+     s#([^a-zA-Z])anläßlich([^a-z])#$1anlässlich$2#g;
+     s#([^a-zA-Z])Anschluß([^a-z])#$1Anschluss$2#g;
+     s#([^a-zA-Z])Arnonfluß([^a-z])#$1Arnonfluss$2#g;
+     s#([^a-zA-Z])Aufschluß([^a-z])#$1Aufschluss$2#g;
+     s#([^a-zA-Z])aufsproßt([^a-z])#$1aufsprosst$2#g;
+     s#([^a-zA-Z])Ausfluß([^a-z])#$1Ausfluss$2#g;
+     s#([^a-zA-Z])Ausschluß([^a-z])#$1Ausschluss$2#g;
+     s#([^a-zA-Z])Baßlage([^a-z])#$1Basslage$2#g;
+     s#([^a-zA-Z])beeinflußt([^a-z])#$1beeinflusst$2#g;
+     s#([^a-zA-Z])beeinflußte([^a-z])#$1beeinflusste$2#g;
+     s#([^a-zA-Z])beeinflußten([^a-z])#$1beeinflussten$2#g;
+     s#([^a-zA-Z])beschloß([^a-z])#$1beschloss$2#g;
+     s#([^a-zA-Z])Beschluß([^a-z])#$1Beschluss$2#g;
+     s#([^a-zA-Z])bewußt([^a-z])#$1bewusst$2#g;
+     s#([^a-zA-Z])bewußte([^a-z])#$1bewusste$2#g;
+     s#([^a-zA-Z])bewußten([^a-z])#$1bewussten$2#g;
+     s#([^a-zA-Z])bewußter([^a-z])#$1bewusster$2#g;
+     s#([^a-zA-Z])bewußtes([^a-z])#$1bewusstes$2#g;
+     s#([^a-zA-Z])Bewußtlosigkeit([^a-z])#$1Bewusstlosigkeit$2#g;
+     s#([^a-zA-Z])Bewußtsein([^a-z])#$1Bewusstsein$2#g;
+     s#([^a-zA-Z])biß([^a-z])#$1biss$2#g;
+     s#([^a-zA-Z])blaß([^a-z])#$1blass$2#g;
+     s#([^a-zA-Z])Blutfluß([^a-z])#$1Blutfluss$2#g;
+     s#([^a-zA-Z])Bogenschuß([^a-z])#$1Bogenschuss$2#g;
+     s#([^a-zA-Z])Briefschluß([^a-z])#$1Briefschluss$2#g;
+     s#([^a-zA-Z])Bundesschluß([^a-z])#$1Bundesschluss$2#g;
+     s#([^a-zA-Z])daß([^a-z])#$1dass$2#g;
+     s#([^a-zA-Z])Daß([^a-z])#$1Dass$2#g;
+     s#([^a-zA-Z])durchnäßt([^a-z])#$1durchnässt$2#g;
+     s#([^a-zA-Z])Einfluß([^a-z])#$1Einfluss$2#g;
+     s#([^a-zA-Z])einflußreiche([^a-z])#$1einflussreiche$2#g;
+     s#([^a-zA-Z])einflußreicher([^a-z])#$1einflussreicher$2#g;
+     s#([^a-zA-Z])einflußreiches([^a-z])#$1einflussreiches$2#g;
+     s#([^a-zA-Z])eingefaßt([^a-z])#$1eingefasst$2#g;
+     s#([^a-zA-Z])eingefaßten([^a-z])#$1eingefassten$2#g;
+     s#([^a-zA-Z])einläßt([^a-z])#$1einlässt$2#g;
+     s#([^a-zA-Z])einschloß([^a-z])#$1einschloss$2#g;
+     s#([^a-zA-Z])Engpaß([^a-z])#$1Engpass$2#g;
+     s#([^a-zA-Z])entläßt([^a-z])#$1entlässt$2#g;
+     s#([^a-zA-Z])entriß([^a-z])#$1entriss$2#g;
+     s#([^a-zA-Z])entschloß([^a-z])#$1entschloss$2#g;
+     s#([^a-zA-Z])Entschluß([^a-z])#$1Entschluss$2#g;
+     s#([^a-zA-Z])entsproß([^a-z])#$1entspross$2#g;
+     s#([^a-zA-Z])erfaßt([^a-z])#$1erfasst$2#g;
+     s#([^a-zA-Z])erfaßte([^a-z])#$1erfasste$2#g;
+     s#([^a-zA-Z])ergoß([^a-z])#$1ergoss$2#g;
+     s#([^a-zA-Z])Erguß([^a-z])#$1Erguss$2#g;
+     s#([^a-zA-Z])Erlaß([^a-z])#$1Erlass$2#g;
+     s#([^a-zA-Z])Erlaßjahr([^a-z])#$1Erlassjahr$2#g;
+     s#([^a-zA-Z])Erlaßjahres([^a-z])#$1Erlassjahres$2#g;
+     s#([^a-zA-Z])erläßt([^a-z])#$1erlässt$2#g;
+     s#([^a-zA-Z])erpreßt([^a-z])#$1erpresst$2#g;
+     s#([^a-zA-Z])erpreßte([^a-z])#$1erpresste$2#g;
+     s#([^a-zA-Z])erpreßten([^a-z])#$1erpressten$2#g;
+     s#([^a-zA-Z])erpreßtes([^a-z])#$1erpresstes$2#g;
+     s#([^a-zA-Z])eßbare([^a-z])#$1essbare$2#g;
+     s#([^a-zA-Z])eßt([^a-z])#$1esst$2#g;
+     s#([^a-zA-Z])Eßt([^a-z])#$1Esst$2#g;
+     s#([^a-zA-Z])faßt([^a-z])#$1fasst$2#g;
+     s#([^a-zA-Z])faßte([^a-z])#$1fasste$2#g;
+     s#([^a-zA-Z])faßten([^a-z])#$1fassten$2#g;
+     s#([^a-zA-Z])Fleischgenuß([^a-z])#$1Fleischgenuss$2#g;
+     s#([^a-zA-Z])floß([^a-z])#$1floss$2#g;
+     s#([^a-zA-Z])Fluß([^a-z])#$1Fluss$2#g;
+     s#([^a-zA-Z])Flußarm([^a-z])#$1Flussarm$2#g;
+     s#([^a-zA-Z])Flußbett([^a-z])#$1Flussbett$2#g;
+     s#([^a-zA-Z])Flußbetten([^a-z])#$1Flussbetten$2#g;
+     s#([^a-zA-Z])Flußnamen([^a-z])#$1Flussnamen$2#g;
+     s#([^a-zA-Z])Flußrand([^a-z])#$1Flussrand$2#g;
+     s#([^a-zA-Z])Flußtal([^a-z])#$1Flusstal$2#g;
+     s#([^a-zA-Z])freilaßt([^a-z])#$1freilasst$2#g;
+     s#([^a-zA-Z])freiläßt([^a-z])#$1freilässt$2#g;
+     s#([^a-zA-Z])freiließ([^a-z])#$1freiliess$2#g;
+     s#([^a-zA-Z])Freßgier([^a-z])#$1Fressgier$2#g;
+     s#([^a-zA-Z])freßt([^a-z])#$1fresst$2#g;
+     s#([^a-zA-Z])friß([^a-z])#$1friss$2#g;
+     s#([^a-zA-Z])frißt([^a-z])#$1frisst$2#g;
+     s#([^a-zA-Z])Gebiß([^a-z])#$1Gebiss$2#g;
+     s#([^a-zA-Z])gefaßt([^a-z])#$1gefasst$2#g;
+     s#([^a-zA-Z])gefaßte([^a-z])#$1gefasste$2#g;
+     s#([^a-zA-Z])gefaßten([^a-z])#$1gefassten$2#g;
+     s#([^a-zA-Z])gehaßt([^a-z])#$1gehasst$2#g;
+     s#([^a-zA-Z])geküßt([^a-z])#$1geküsst$2#g;
+     s#([^a-zA-Z])genoß([^a-z])#$1genoss$2#g;
+     s#([^a-zA-Z])Genuß([^a-z])#$1Genuss$2#g;
+     s#([^a-zA-Z])genußsüchtige([^a-z])#$1genusssüchtige$2#g;
+     s#([^a-zA-Z])gepreßten([^a-z])#$1gepressten$2#g;
+     s#([^a-zA-Z])gesproßt([^a-z])#$1gesprosst$2#g;
+     s#([^a-zA-Z])gewiß([^a-z])#$1gewiss$2#g;
+     s#([^a-zA-Z])Gewiß([^a-z])#$1Gewiss$2#g;
+     s#([^a-zA-Z])Gewißheit([^a-z])#$1Gewissheit$2#g;
+     s#([^a-zA-Z])gewißlich([^a-z])#$1gewisslich$2#g;
+     s#([^a-zA-Z])Gewißlich([^a-z])#$1Gewisslich$2#g;
+     s#([^a-zA-Z])gewußt([^a-z])#$1gewusst$2#g;
+     s#([^a-zA-Z])Gosanfluß([^a-z])#$1Gosanfluss$2#g;
+     s#([^a-zA-Z])goß([^a-z])#$1goss$2#g;
+     s#([^a-zA-Z])Grenzfluß([^a-z])#$1Grenzfluss$2#g;
+     s#([^a-zA-Z])Guß([^a-z])#$1Guss$2#g;
+     s#([^a-zA-Z])Gußwerk([^a-z])#$1Gusswerk$2#g;
+     s#([^a-zA-Z])Haß([^a-z])#$1Hass$2#g;
+     s#([^a-zA-Z])häßlich([^a-z])#$1hässlich$2#g;
+     s#([^a-zA-Z])häßliche([^a-z])#$1hässliche$2#g;
+     s#([^a-zA-Z])häßlichen([^a-z])#$1hässlichen$2#g;
+     s#([^a-zA-Z])häßlicher([^a-z])#$1hässlicher$2#g;
+     s#([^a-zA-Z])haßt([^a-z])#$1hasst$2#g;
+     s#([^a-zA-Z])Haßt([^a-z])#$1Hasst$2#g;
+     s#([^a-zA-Z])haßte([^a-z])#$1hasste$2#g;
+     s#([^a-zA-Z])haßten([^a-z])#$1hassten$2#g;
+     s#([^a-zA-Z])Heilsratschluß([^a-z])#$1Heilsratschluss$2#g;
+     s#([^a-zA-Z])herabfloß([^a-z])#$1herabfloss$2#g;
+     s#([^a-zA-Z])herausfloß([^a-z])#$1herausfloss$2#g;
+     s#([^a-zA-Z])hervorsproßt([^a-z])#$1hervorsprosst$2#g;
+     s#([^a-zA-Z])hinabfloß([^a-z])#$1hinabfloss$2#g;
+     s#([^a-zA-Z])hinterläßt([^a-z])#$1hinterlässt$2#g;
+     s#([^a-zA-Z])hißten([^a-z])#$1hissten$2#g;
+     s#([^a-zA-Z])iß([^a-z])#$1iss$2#g;
+     s#([^a-zA-Z])Iß([^a-z])#$1Iss$2#g;
+     s#([^a-zA-Z])ißt([^a-z])#$1isst$2#g;
+     s#([^a-zA-Z])Jabbokfluß([^a-z])#$1Jabbokfluss$2#g;
+     s#([^a-zA-Z])kaltgepreßtes([^a-z])#$1kaltgepresstes$2#g;
+     s#([^a-zA-Z])Kriegsroß([^a-z])#$1Kriegsross$2#g;
+     s#([^a-zA-Z])Kuß([^a-z])#$1Kuss$2#g;
+     s#([^a-zA-Z])Kußhände([^a-z])#$1Kusshände$2#g;
+     s#([^a-zA-Z])küßt([^a-z])#$1küsst$2#g;
+     s#([^a-zA-Z])Küßt([^a-z])#$1Küsst$2#g;
+     s#([^a-zA-Z])küßte([^a-z])#$1küsste$2#g;
+     s#([^a-zA-Z])küßten([^a-z])#$1küssten$2#g;
+     s#([^a-zA-Z])laß([^a-z])#$1lass$2#g;
+     s#([^a-zA-Z])Laß([^a-z])#$1Lass$2#g;
+     s#([^a-zA-Z])laßt([^a-z])#$1lasst$2#g;
+     s#([^a-zA-Z])Laßt([^a-z])#$1Lasst$2#g;
+     s#([^a-zA-Z])läßt([^a-z])#$1lässt$2#g;
+     s#([^a-zA-Z])Läßt([^a-z])#$1Lässt$2#g;
+     s#([^a-zA-Z])Läuterungsprozeß([^a-z])#$1Läuterungsprozess$2#g;
+     s#([^a-zA-Z])losriß([^a-z])#$1losriss$2#g;
+     s#([^a-zA-Z])Meßgefäß([^a-z])#$1Messgefäß$2#g;
+     s#([^a-zA-Z])Meßrute([^a-z])#$1Messrute$2#g;
+     s#([^a-zA-Z])Meßschnur([^a-z])#$1Messschnur$2#g;
+     s#([^a-zA-Z])Meßschnüre([^a-z])#$1Messschnüre$2#g;
+     s#([^a-zA-Z])miß([^a-z])#$1miss$2#g;
+     s#([^a-zA-Z])mißachte([^a-z])#$1missachte$2#g;
+     s#([^a-zA-Z])mißachten([^a-z])#$1missachten$2#g;
+     s#([^a-zA-Z])mißachtest([^a-z])#$1missachtest$2#g;
+     s#([^a-zA-Z])mißachtet([^a-z])#$1missachtet$2#g;
+     s#([^a-zA-Z])mißachtete([^a-z])#$1missachtete$2#g;
+     s#([^a-zA-Z])mißachteten([^a-z])#$1missachteten$2#g;
+     s#([^a-zA-Z])Mißachtung([^a-z])#$1Missachtung$2#g;
+     s#([^a-zA-Z])Mißbildungen([^a-z])#$1Missbildungen$2#g;
+     s#([^a-zA-Z])Mißbrauch([^a-z])#$1Missbrauch$2#g;
+     s#([^a-zA-Z])mißbrauchen([^a-z])#$1missbrauchen$2#g;
+     s#([^a-zA-Z])mißbraucht([^a-z])#$1missbraucht$2#g;
+     s#([^a-zA-Z])Mißernte([^a-z])#$1Missernte$2#g;
+     s#([^a-zA-Z])mißfällt([^a-z])#$1missfällt$2#g;
+     s#([^a-zA-Z])mißfiel([^a-z])#$1missfiel$2#g;
+     s#([^a-zA-Z])Mißgeburten([^a-z])#$1Missgeburten$2#g;
+     s#([^a-zA-Z])Mißgeschick([^a-z])#$1Missgeschick$2#g;
+     s#([^a-zA-Z])mißgönnen([^a-z])#$1missgönnen$2#g;
+     s#([^a-zA-Z])Mißgriff([^a-z])#$1Missgriff$2#g;
+     s#([^a-zA-Z])mißgünstig([^a-z])#$1missgünstig$2#g;
+     s#([^a-zA-Z])Mißgünstigen([^a-z])#$1Missgünstigen$2#g;
+     s#([^a-zA-Z])mißhandeln([^a-z])#$1misshandeln$2#g;
+     s#([^a-zA-Z])mißhandelt([^a-z])#$1misshandelt$2#g;
+     s#([^a-zA-Z])Mißhandelt([^a-z])#$1Misshandelt$2#g;
+     s#([^a-zA-Z])mißhandelten([^a-z])#$1misshandelten$2#g;
+     s#([^a-zA-Z])Mißhandlung([^a-z])#$1Misshandlung$2#g;
+     s#([^a-zA-Z])Mißhandlungen([^a-z])#$1Misshandlungen$2#g;
+     s#([^a-zA-Z])mißlungenen([^a-z])#$1misslungenen$2#g;
+     s#([^a-zA-Z])Mißmut([^a-z])#$1Missmut$2#g;
+     s#([^a-zA-Z])mißmutig([^a-z])#$1missmutig$2#g;
+     s#([^a-zA-Z])mißmutigen([^a-z])#$1missmutigen$2#g;
+     s#([^a-zA-Z])mißratener([^a-z])#$1missratener$2#g;
+     s#([^a-zA-Z])Mißstände([^a-z])#$1Missstände$2#g;
+     s#([^a-zA-Z])mißt([^a-z])#$1misst$2#g;
+     s#([^a-zA-Z])muß([^a-z])#$1muss$2#g;
+     s#([^a-zA-Z])Muß([^a-z])#$1Muss$2#g;
+     s#([^a-zA-Z])mußt([^a-z])#$1musst$2#g;
+     s#([^a-zA-Z])müßt([^a-z])#$1müsst$2#g;
+     s#([^a-zA-Z])mußte([^a-z])#$1musste$2#g;
+     s#([^a-zA-Z])Mußte([^a-z])#$1Musste$2#g;
+     s#([^a-zA-Z])müßte([^a-z])#$1müsste$2#g;
+     s#([^a-zA-Z])Müßte([^a-z])#$1Müsste$2#g;
+     s#([^a-zA-Z])mußten([^a-z])#$1mussten$2#g;
+     s#([^a-zA-Z])müßten([^a-z])#$1müssten$2#g;
+     s#([^a-zA-Z])mußtest([^a-z])#$1musstest$2#g;
+     s#([^a-zA-Z])müßtest([^a-z])#$1müsstest$2#g;
+     s#([^a-zA-Z])mußtet([^a-z])#$1musstet$2#g;
+     s#([^a-zA-Z])müßtet([^a-z])#$1müsstet$2#g;
+     s#([^a-zA-Z])nachläßt([^a-z])#$1nachlässt$2#g;
+     s#([^a-zA-Z])niederläßt([^a-z])#$1niederlässt$2#g;
+     s#([^a-zA-Z])niederriß([^a-z])#$1niederriss$2#g;
+     s#([^a-zA-Z])Nußgarten([^a-z])#$1Nussgarten$2#g;
+     s#([^a-zA-Z])Paß([^a-z])#$1Pass$2#g;
+     s#([^a-zA-Z])paßt([^a-z])#$1passt$2#g;
+     s#([^a-zA-Z])pißt([^a-z])#$1pisst$2#g;
+     s#([^a-zA-Z])Prachtroß([^a-z])#$1Prachtross$2#g;
+     s#([^a-zA-Z])preßt([^a-z])#$1presst$2#g;
+     s#([^a-zA-Z])preßte([^a-z])#$1presste$2#g;
+     s#([^a-zA-Z])Prozeß([^a-z])#$1Prozess$2#g;
+     s#([^a-zA-Z])Ratschluß([^a-z])#$1Ratschluss$2#g;
+     s#([^a-zA-Z])Räucherfaß([^a-z])#$1Räucherfass$2#g;
+     s#([^a-zA-Z])Regenguß([^a-z])#$1Regenguss$2#g;
+     s#([^a-zA-Z])riß([^a-z])#$1riss$2#g;
+     s#([^a-zA-Z])Riß([^a-z])#$1Riss$2#g;
+     s#([^a-zA-Z])Roß([^a-z])#$1Ross$2#g;
+     s#([^a-zA-Z])Roßtor([^a-z])#$1Rosstor$2#g;
+     s#([^a-zA-Z])Roßtors([^a-z])#$1Rosstors$2#g;
+     s#([^a-zA-Z])Samenerguß([^a-z])#$1Samenerguss$2#g;
+     s#([^a-zA-Z])schloß([^a-z])#$1schloss$2#g;
+     s#([^a-zA-Z])Schluß([^a-z])#$1Schluss$2#g;
+     s#([^a-zA-Z])Schlußbilanz([^a-z])#$1Schlussbilanz$2#g;
+     s#([^a-zA-Z])Schlußfolgerung([^a-z])#$1Schlussfolgerung$2#g;
+     s#([^a-zA-Z])Schlußstein([^a-z])#$1Schlussstein$2#g;
+     s#([^a-zA-Z])Schlußwort([^a-z])#$1Schlusswort$2#g;
+     s#([^a-zA-Z])Schlußworte([^a-z])#$1Schlussworte$2#g;
+     s#([^a-zA-Z])schoß([^a-z])#$1schoss$2#g;
+     s#([^a-zA-Z])Schößling([^a-z])#$1Schössling$2#g;
+     s#([^a-zA-Z])Schößlinge([^a-z])#$1Schösslinge$2#g;
+     s#([^a-zA-Z])Schuldenerlaß([^a-z])#$1Schuldenerlass$2#g;
+     s#([^a-zA-Z])seßhaft([^a-z])#$1sesshaft$2#g;
+     s#([^a-zA-Z])Sihorfluß([^a-z])#$1Sihorfluss$2#g;
+     s#([^a-zA-Z])Sproß([^a-z])#$1Spross$2#g;
+     s#([^a-zA-Z])Sprößlinge([^a-z])#$1Sprösslinge$2#g;
+     s#([^a-zA-Z])sproßt([^a-z])#$1sprosst$2#g;
+     s#([^a-zA-Z])sproßte([^a-z])#$1sprosste$2#g;
+     s#([^a-zA-Z])sproßten([^a-z])#$1sprossten$2#g;
+     s#([^a-zA-Z])Troß([^a-z])#$1Tross$2#g;
+     s#([^a-zA-Z])überfluß([^a-z])#$1überfluss$2#g;
+     s#([^a-zA-Z])überlaß([^a-z])#$1überlass$2#g;
+     s#([^a-zA-Z])überläßt([^a-z])#$1überlässt$2#g;
+     s#([^a-zA-Z])überschuß([^a-z])#$1überschuss$2#g;
+     s#([^a-zA-Z])umfaßt([^a-z])#$1umfasst$2#g;
+     s#([^a-zA-Z])umfaßte([^a-z])#$1umfasste$2#g;
+     s#([^a-zA-Z])umfaßten([^a-z])#$1umfassten$2#g;
+     s#([^a-zA-Z])umfließt([^a-z])#$1umfliesst$2#g;
+     s#([^a-zA-Z])unermeßlich([^a-z])#$1unermesslich$2#g;
+     s#([^a-zA-Z])ungewiß([^a-z])#$1ungewiss$2#g;
+     s#([^a-zA-Z])Unterlaß([^a-z])#$1Unterlass$2#g;
+     s#([^a-zA-Z])unterläßt([^a-z])#$1unterlässt$2#g;
+     s#([^a-zA-Z])veranlaßt([^a-z])#$1veranlasst$2#g;
+     s#([^a-zA-Z])verblaßt([^a-z])#$1verblasst$2#g;
+     s#([^a-zA-Z])Verdruß([^a-z])#$1Verdruss$2#g;
+     s#([^a-zA-Z])verfaßt([^a-z])#$1verfasst$2#g;
+     s#([^a-zA-Z])verfaßte([^a-z])#$1verfasste$2#g;
+     s#([^a-zA-Z])verfaßten([^a-z])#$1verfassten$2#g;
+     s#([^a-zA-Z])vergeßlicher([^a-z])#$1vergesslicher$2#g;
+     s#([^a-zA-Z])vergeßt([^a-z])#$1vergesst$2#g;
+     s#([^a-zA-Z])vergiß([^a-z])#$1vergiss$2#g;
+     s#([^a-zA-Z])Vergiß([^a-z])#$1Vergiss$2#g;
+     s#([^a-zA-Z])vergißt([^a-z])#$1vergisst$2#g;
+     s#([^a-zA-Z])Vergißt([^a-z])#$1Vergisst$2#g;
+     s#([^a-zA-Z])vergoß([^a-z])#$1vergoss$2#g;
+     s#([^a-zA-Z])verhaßt([^a-z])#$1verhasst$2#g;
+     s#([^a-zA-Z])verhaßten([^a-z])#$1verhassten$2#g;
+     s#([^a-zA-Z])verlaß([^a-z])#$1verlass$2#g;
+     s#([^a-zA-Z])Verlaß([^a-z])#$1Verlass$2#g;
+     s#([^a-zA-Z])verläßlich([^a-z])#$1verlässlich$2#g;
+     s#([^a-zA-Z])verlaßt([^a-z])#$1verlasst$2#g;
+     s#([^a-zA-Z])Verlaßt([^a-z])#$1Verlasst$2#g;
+     s#([^a-zA-Z])verläßt([^a-z])#$1verlässt$2#g;
+     s#([^a-zA-Z])Verläßt([^a-z])#$1Verlässt$2#g;
+     s#([^a-zA-Z])vermißt([^a-z])#$1vermisst$2#g;
+     s#([^a-zA-Z])Vermißte([^a-z])#$1Vermisste$2#g;
+     s#([^a-zA-Z])verschloß([^a-z])#$1verschloss$2#g;
+     s#([^a-zA-Z])Vließ([^a-z])#$1Vlies$2#g;
+     s#([^a-zA-Z])wegfrißt([^a-z])#$1wegfrisst$2#g;
+     s#([^a-zA-Z])wegriß([^a-z])#$1wegriss$2#g;
+     s#([^a-zA-Z])Weingenuß([^a-z])#$1Weingenuss$2#g;
+     s#([^a-zA-Z])wißt([^a-z])#$1wisst$2#g;
+     s#([^a-zA-Z])Wißt([^a-z])#$1Wisst$2#g;
+     s#([^a-zA-Z])Wollvließ([^a-z])#$1Wollvlies$2#g;
+     s#([^a-zA-Z])Wurfgeschoß([^a-z])#$1Wurfgeschoss$2#g;
+     s#([^a-zA-Z])Wurzelsproß([^a-z])#$1Wurzelspross$2#g;
+     s#([^a-zA-Z])wußte([^a-z])#$1wusste$2#g;
+     s#([^a-zA-Z])Wußte([^a-z])#$1Wusste$2#g;
+     s#([^a-zA-Z])wüßte([^a-z])#$1wüsste$2#g;
+     s#([^a-zA-Z])wußten([^a-z])#$1wussten$2#g;
+     s#([^a-zA-Z])wüßten([^a-z])#$1wüssten$2#g;
+     s#([^a-zA-Z])wußtest([^a-z])#$1wusstest$2#g;
+     s#([^a-zA-Z])Wußtest([^a-z])#$1Wusstest$2#g;
+     s#([^a-zA-Z])wüßtest([^a-z])#$1wüsstest$2#g;
+     s#([^a-zA-Z])Wußtet([^a-z])#$1Wusstet$2#g;
+     s#([^a-zA-Z])wüßtet([^a-z])#$1wüsstet$2#g;
+     s#([^a-zA-Z])zerfloß([^a-z])#$1zerfloss$2#g;
+     s#([^a-zA-Z])zerriß([^a-z])#$1zerriss$2#g;
+     s#([^a-zA-Z])zulaßt([^a-z])#$1zulasst$2#g;
+     s#([^a-zA-Z])zuläßt([^a-z])#$1zulässt$2#g;
+     s#([^a-zA-Z])zumeßt([^a-z])#$1zumesst$2#g;
+     s#([^a-zA-Z])zusammenfaßte([^a-z])#$1zusammenfasste$2#g;
+     s#([^a-zA-Z])zusammengefaßt([^a-z])#$1zusammengefasst$2#g;
+     s#([^a-zA-Z])zusammenschloß([^a-z])#$1zusammenschloss$2#g;
+
+     print O $_;
+  }
+  close O;
+  close I;
+}

@@ -1,0 +1,8 @@
+<public:component lightweight="true">
+    <script type="text/javascript">
+    <!--
+        element.setAttribute('unselectable', 'off', 0);
+        element.onselectstart = function() { return true; };
+    //-->
+    </script>
+</public:component>

@@ -1,0 +1,213 @@
+#!/usr/bin/perl
+
+# cd ~/html/HTBibel;
+# cd ~/html/HTBibel; HTBibel_index `for F in {1Mo,2Mo,3Mo,4Mo,5Mo,Jos,Ri,Ruth,1Sam,2Sam,1Koe,2Koe,1Chr,2Chr,Esr,Neh,Est,Hiob,Ps,Spr,Pred,Hld,Jes,Jer,Klgl,Hes,Dan,Hos,Joel,Am,Ob,Jona,Mi,Nah,Hab,Zeph,Hag,Sach,Mal,Mt,Mk,Lk,Joh,Apg,Roem,1Kor,2Kor,Gal,Eph,Phil,Kol,1Th,2Th,1Tim,2Tim,Tit,Phlm,Hebr,Jak,1Pt,2Pt,1Joh,2Joh,3Joh,Jud,Offb}; do ls $F | grep '.html$' | sort -n | sed -e "s@^@$F/@" ; done` >index.js;
+## HTBibel_index html `for F in {1Mo,2Mo,3Mo,4Mo,5Mo,Jos,Ri,Ruth,1Sam,2Sam,1Koe,2Koe,1Chr,2Chr,Esr,Neh,Est,Hiob,Ps,Spr,Pred,Hld,Jes,Jer,Klgl,Hes,Dan,Hos,Joel,Am,Ob,Jona,Mi,Nah,Hab,Zeph,Hag,Sach,Mal,Mt,Mk,Lk,Joh,Apg,Roem,1Kor,2Kor,Gal,Eph,Phil,Kol,1Th,2Th,1Tim,2Tim,Tit,Phlm,Hebr,Jak,1Pt,2Pt,1Joh,2Joh,3Joh,Jud,Offb}; do ls $F | grep '.html$' | sort -n | sed -e "s@^@$F/@" ; done` >t.html
+##   HTBibel_index xml `for F in {1Mo,2Mo,3Mo,4Mo,5Mo,Jos,Ri,Ruth,1Sam,2Sam,1Koe,2Koe,1Chr,2Chr,Esr,Neh,Est,Hiob,Ps,Spr,Pred,Hld,Jes,Jer,Klgl,Hes,Dan,Hos,Joel,Am,Ob,Jona,Mi,Nah,Hab,Zeph,Hag,Sach,Mal,Mt,Mk,Lk,Joh,Apg,Roem,1Kor,2Kor,Gal,Eph,Phil,Kol,1Th,2Th,1Tim,2Tim,Tit,Phlm,Hebr,Jak,1Pt,2Pt,1Joh,2Joh,3Joh,Jud,Offb}; do ls $F | grep '.html$' | sort -n | sed -e "s@^@$F/@" ; done` >index.xml
+#xargs -n 1 perl -e 'print "@ARGV[0]/@ARGV[1] "' $F
+
+if($ARGV[0] eq "xml") {
+  shift;
+  $xml = 1;
+}
+elsif($ARGV[0] eq "html") {
+  shift;
+  $html = 1;
+}
+else {
+  $js = 1;
+}
+$notfirst=0;
+print ($js  ? "function getitems() { items = [" :
+      ($xml ? "<items>" :
+              '<items style="display:none;">'));
+foreach(@ARGV)
+{
+  $file = $_;
+  read_file($file);
+
+  for($i=0; $i <= $#VERS || $i <= $#META; $i++) {
+    $bookchap = $file;
+    $bookchap =~ s§\.html§§;
+    $meta = $META[$i]; chop $meta;
+    $vers = $VERS[$i]; chop $vers;
+    $foot = $FOOT[$i]; chop $foot;
+    $foot =~ s/Kap 2 28 32 //; #prevented hyperlink
+    $foot =~ s/2 Chr 1 18 //; #prevented hyperlink
+    $metahtml = $METAHTML[$i];
+    $vershtml = $VERSHTML[$i];
+    $metahtml =~ tr/'<>&/^{}@/ if $xml;
+    $vershtml =~ tr/'<>&/^{}@/ if $xml;
+    $metahtml =~ s/'/\\'/g  if $js;
+    $vershtml =~ s/'/\\'/g  if $js;
+    $metahtml =~ s/'/&#39;/g  if $html;
+    $vershtml =~ s/'/&#39;/g  if $html;
+    print "
+<i c='$bookchap' n='$i'
+   m='$meta'
+   M='$metahtml'
+   v='$vers'
+   V='$vershtml'
+   f='$foot'
+/>" if $xml;
+    print "
+<item class='$bookchap:$i:$meta:$vers:$foot'
+ id='$metahtml\@$vershtml'
+</item>" if $html;
+    print "," if $js && $notfirst;
+    $notfirst = 1;
+    print "
+{c:'$bookchap',
+ n:'$i',
+ m:'$meta',
+ M:'$metahtml',
+ v:'$vers',
+ V:'$vershtml',
+ f:'$foot'
+}" if $js;
+  }
+#  close O;
+  close I;
+}
+print "\n".($js ? "];\n}"
+                : "</items>")."\n";
+
+
+
+sub inmetabody {
+  if($file =~ m§index.html§) {
+    return (grep (/id="header"/,@ATTS) && !grep (/^h2$/,@TAGS) && !grep (/id="breadcrumbs"|class="book_nav"|class="contents"|class="contentlist"|id="footer"/,@ATTS));
+  }
+  else {
+    return (grep (/^(h1|h2)$/,@TAGS) && !grep (/class="chapter"/,@ATTS)); # still includes '<h2 class="ct">Psalm \d+</h2>'
+ # || (grep (/class="para"/,@ATTS) && grep (/class="footnote/,@ATTS)));
+  }
+}
+
+sub verseheading {
+  return (grep (/^h2$/,@TAGS) && grep (/class="ct"/,@ATTS)); # regard h ct to belong to verse
+}
+
+sub read_file {
+  $file =$_[0];
+  $N = 1;
+# $new = $file;
+# $new =~ s/(\d+)\/index.html/$1.".html"/e;
+# system "mv $file $new"
+#  $orig = "../Schlachter_2000.orig/$file";
+#system "mv $orig $file";
+#  system "mv -i $file $orig";
+
+  $/='<';
+  $comment = 0;
+  $versenum = 0;
+  @TAGS = ();
+  @ATTS = ();
+  @METAHTML = (); # HTML version of META
+  @META = (); # words of intro or heading
+  @VERSHTML = (); # HTML version of VERS
+  @VERS = (); # words of intro or verse
+  @FOOT = (); # words of footnotes in verse
+  open I, "$file";
+#  open O, ">$file";
+  while(<I>)
+  {
+    $footnote_text = 0;
+    $N += s#\n##g;
+    s#[\x00-\x1f]##g;
+    if (m#^\!(.*?)>(.*)#s) { # complete comment
+      $text = $2;
+    }
+    elsif (m#^\!--(.*)#s) { # starting comment
+      $text = $/;
+      $comment = 1;
+    }
+    elsif (m#-->(.*)#s && $comment) { # ending comment
+      $text = $1;
+      $comment = 0;
+    }
+    elsif ($comment) { # in comment
+      $text = $/;
+    }
+    elsif (m#^(area|base|basefont|br|col|frame|ht|img|input|isindex|link|meta|param)(>|([^a-zA-Z0-9].*?)>)(.*)#s) { # self-closing tag
+      $tag=$1;
+      $att=$3;
+      $text = $4;
+      $METAHTML[$versenum+verseheading].="<$tag$att>" if inmetabody;
+      $VERSHTML[$versenum             ].="<$tag$att>" if grep (/^SPAN$/,@TAGS) && $tag ne "SPAN";
+#     print STDERR "$file $N: self-closing tag $tag\n" unless $tag =~ m#^(area|base|basefont|br|col|frame|ht|img|input|isindex|link|meta|param)$#;
+    }
+    elsif (m#^([a-zA-Z0-9]+)(.*?)>(.*)#s) { # opening tag
+      $tag=$1;
+      $att=$2;
+#     $att =~ s#(href=\")#"$file/../$1"#i;
+      $text = $3;
+      $footnote_text = 1 if (grep (/class="footnote/,$att)) && $text =~ m/^\[\d+\] (.*)/; #to chop footnote index;
+      push @TAGS,$tag;
+      push @ATTS,$att;
+      if (m#^A NAME="(\d+)">#) {
+	$versenum++;
+	print STDERR "$file $N: versenum $1 instead of expected $versenum\n" if $1 != $versenum;
+	$versenum = $1;
+      }
+#     if (inmetabody) {
+#	$att =~ s#(class="[^\"]+)#$1 novmargin# if $tag =~ m#^(h1|h2)$#;
+#       adapt footnote into normal context:
+#	if ($tag =~ m#a|A# && $att =~ m#class="footnote_link"# && !($file =~ m#index.html#)) {
+#	  $METAHTML[$versenum].="{P /}";
+#	  $att =~ s#href="" (class="footnote_link") onmouseover=".*?"#$1#;
+#	}
+#     }
+      $METAHTML[$versenum+verseheading].="<$tag$att>" if inmetabody;
+      $VERSHTML[$versenum             ].="<$tag$att>" if grep (/^SPAN$/,@TAGS) && $tag ne "SPAN";
+    }
+#    elsif (m#^/(p)>(.*)# && $file =~ m#index.html#) { # ignore closing p
+#      $text = $2;
+#    }
+    elsif (m#^/([a-zA-Z0-9]+)>(.*)#s) { # closing tag
+      $t = $1;
+      $text = $2;
+      $tag = pop (@TAGS);
+      push @TAGS,$tag;
+      $METAHTML[$versenum+verseheading].="</$tag>" if inmetabody;
+      $VERSHTML[$versenum             ].="</$tag>" if grep (/^SPAN$/,@TAGS) && $tag ne "SPAN";
+      $tag = pop (@TAGS);
+      $att = pop (@ATTS);
+      die "$file $N: Expected </$tag>, but got </$t>; rest=$text, TAGS=@TAGS, ATTS=@ATTS\n" if lc($tag) ne lc($t);
+    }
+    else {
+      die "$file $N: Expected a tag name, but got: $_\n" if ($_ ne '<');
+    };
+    chop $text;
+    $words = $text;
+    $words =~ s#&[a-z]+;# #g;
+    $words =~ s#^\s*##;
+
+    @WORDS = split /[\x20-\x2f\x3a-\x40\x5b-\x60\x7b-\x7f]+/,$words; # exclude 'stop characters'
+    shift @WORDS if !$WORDS[0];
+    shift @WORDS if $footnote_text;
+    $words = join(' ', @WORDS);
+
+    if (inmetabody) {
+      if (!grep (/^(a|A)$/,@TAGS)) { #also footnotes
+	$META[$versenum+verseheading].=$words.' ' if $words;
+      }
+      $METAHTML[$versenum+verseheading].=$text;
+    }
+    if (grep (/^SPAN$/,@TAGS)) { #this implies: !($file =~ m#index.html#)
+                               # && grep (/class="para"/,@ATTS)
+                               # && !grep (/class="chap_num"|class="versenum"|class="cr"|class="sr"/,@ATTS)
+      if (!grep (/^(a|A)$/,@TAGS)) { #these may be in footnotes!
+	if(grep (/class="footnote/,@ATTS)) {
+	  $FOOT[$versenum].=$words.' ' if $words;
+	}
+	else {
+	  $VERS[$versenum].=$words.' ' if $words;
+	}
+      }
+      $VERSHTML[$versenum].=$text;
+    }
+  }
+  die "$file $N: Unfinished tags: @TAGS\n" if @TAGS;
+}
+

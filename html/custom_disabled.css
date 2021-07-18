@@ -1,0 +1,86 @@
+@charset "UTF-8"; /* https://developer.mozilla.org/en/CSS/@charset
+ does not work for displaying the comments in this file in Firefox */
+
+/* Die hier gemachten Aenderungen ueberlagern die Standard-Einstellungen in style.css */
+
+body {
+	font-size: 20px; /* Allgemeine Schriftgroesse */
+}
+
+/* Fuer mit der Maus auswaehlbaren Metatext das "disabled" durch "all" ersetzen */
+@media disabled {
+  div.chap_num, h2.st, h2.ct, p.sr, p.cr, span.versenum, span.footnote, div#header, div#footer{
+    user-select: text;
+    -moz-user-select: text;
+    -khtml-user-select: text;
+    -o-user-select: text;
+    -webkit-user-select: text;
+    behavior: url(../selectable.htc) url(selectable.htc);
+  }
+}
+
+/* Fuer dunkle Farben das "disabled" durch "all" ersetzen */
+@media disabled {
+  body, div.trigger {
+    background-color:	#884400; /* brown */
+  }
+  div#menu{
+    border-color: #884400; /* same as body.background-color */
+  }
+  ::selection {
+   background:#2f65ff; /* light blue */
+  }
+  ::-moz-selection {
+    background:#2f65ff;
+  }
+  ::-webkit-selection {
+    background:#2f65ff;
+  }
+  div#content {
+     color:      #ffbb11; /* gold */
+  }
+  div#content {
+    background-color:	#000000; /* black */
+  }
+  span.footnote_box, span.footnote_expand {
+    background-color:	#444444; /* gray */
+  }
+  span.footnote {
+    color:			#FF8800; /* orange */
+  }
+  span.spot, span.balloon a {
+    color:			#FF2200; /* dark orange */
+  }
+  span.balloon, span.spot, span.footnote:hover, span.footnote_close {
+    background: rgb(255, 140, 80); /* fallback for IE7 */
+    background: rgba(255, 140, 80, 0.4); /*semi-transparent*/
+  }
+  span.footnote.alt {
+    color:			#CC8000;
+  }
+  h2{
+    color:			#88AACC; /* light blue */
+  }
+  div#header, div#footer, div.menupad{
+    color:			#CCCCFF; /* very light blue */
+    background-color:	#9d8070;
+  }
+  select, select caption, option,
+  span.text, input.text,
+  div.menupad a.active, div.menupad span.active{
+    background-color:	#AAAAAA; /* grey */
+    border-color:	#505050; /* dark grey */
+  }
+  input.button{
+    border-color:	#AAAAAA; /* grey */
+  }
+  .chap_link, .chap_active{
+    background-color:	#101316;
+  }
+  .result-highlight, h2.results{
+    background-color:	#4488DD !important; /* blue */ /* #eea0ff #dd80ff #ddff00; */
+  }
+  .verse-highlight{
+    background-color:	#383F7B !important; /* dark blue */ /* #EFAFAB; */
+  }
+}
