@@ -1,0 +1,18 @@
+#!/bin/bash
+
+cd ~/html
+rm HTBibel.zip
+zip -r HTBibel.zip HTBibel.html HTBibel/*.html HTBibel/*/*.html HTBibel/images/*.{gif,png,ico} HTBibel/*.{js,css,htc} HTBibel/.nomedia # HTBibel/*.xml
+ls -l  HTBibel.*
+lftp web351@von-Oheimb.de/David/perlen
+exit 0
+
+# cd David/perlen
+mput HTBibel.apk HTBibel.zip
+cd HTBibel
+lcd HTBibel
+mirror --parallel=4 -R --delete -x .svn -x admin -X '.*' -X '*~'
+
+# rsync -va --no-owner --no-group --exclude '*~' --exclude '.svn/' --exclude 'admin/' --delete --exclude custom.css ~/html/HTBibel/ sam:/sdcard/HTBibel
+# rsync -va --no-owner --no-group --exclude '*~' --exclude '.svn/' --exclude 'admin/' --delete --exclude custom.css ~/html/HTBibel/ htc:/sdcard/HTBibel
+

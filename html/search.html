@@ -1,0 +1,313 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<meta http-equiv="Content-type" content="text/html; charset=UTF-8">
+<title>Suche - HTBibel (Schlachter 2000)</title>
+<meta name="keywords" content="Bibel, Schlachter 2000, Übersetzung, S2K, Heilige Schrift">
+<meta name="description" content="HTBibel (die Heilige Schrift) - Schlachter 2000 Übersetzung">
+<meta name="robots" content="index,follow">
+<meta name="viewport" content="initial-scale=1.0, minimum-scale=0.2, maximum-scale=2.5, user-scalable=yes">
+<link rel="stylesheet" type="text/css" href="style.css">
+<link rel="stylesheet" type="text/css" href="search.css">
+<link rel="shortcut icon" href="images/icon.ico">
+<script type="text/javascript">inbook=false;</script><script type="text/javascript" src="scripts.js"></script>
+</head>
+<body lang="de" onload="initpage(0,0,0);">
+	<noscript><span class="error">Damit die Menüs, Fußnoten, Versmarkierungen, Merker, Leseplan-Datum usw. funktionieren, bitte <a href="http://www.enable-javascript.com/de/">JavaScript aktivieren</a>.</span></noscript>
+	<div id="menu" class="menupad">
+		<span id="index"  class="menutop"       ><a class="activ_" href="index.html"  title="Startseite">HTBibel</a> </span>
+		<span id="old"    class="menutop middot"><a class="activ_" href="old.html"    title="Altes Testament">AT</a> </span>
+		<span id="new"    class="menutop middot"><a class="activ_" href="new.html"    title="Neues Testament">NT</a> </span>
+		<span id="search" class="menutop middot"><a class="active" href="search.html" title="Textsuche">Suche</a>    </span>
+		<span id="plan"   class="menutop middot"><a class="activ_" href="plan.html"   title="Leseplan">Plan</a>      </span>
+		<span id="about"  class="menutop middot"><a class="activ_" href="about.html"  title="Informationen">Infos</a></span>
+	</div>
+	<div id="page">
+		<div tabindex="-1" id="main">
+			<div id="content">
+				<div id="header">
+					<div id="breadcrumbs"><a href="index.html">HTBibel</a> &#187; <strong>Suche</strong></div>
+
+					<h1>Textsuche</h1>
+<div id="wait">Bitte warten, bis der Index geladen ist...</div>
+<script type="text/javascript" src="search.js"></script>
+<script type="text/javascript">document.getElementById("wait").style.display = 'none';</script>
+<div class="search">
+<form name="search"   action="javascript:search();">
+<label for="queryP">Text:&nbsp;
+                    &nbsp;&nbsp;</label> <input id="queryP"     type="text"   class="text" style="width: 25em">
+                                         <input tabindex="-1" value="suchen" type="submit" class="button do"> <label for="queryP"><br></label>
+<label for="queryA">nur mit:    </label> <input id="queryA"    type="text"   class="text" style="width: 12em">
+<label for="queryN">aber ohne:  </label> <input id="queryN"    type="text"   class="text" style="width: 12em"><label for="queryN"><br></label>
+<input id="meta"  type="checkbox" class="button"><label for="meta"><i>Metatext</i> einbeziehen (Einleitungen, Überschriften und Fußnoten)<br></label>
+<input id="case"  type="checkbox" class="button"><label for="case">Groß- und Kleinschreibung beachten<br></label>
+<!--Einschränkungen-->
+<input  tabindex="-1" value="Suche" type="submit" class="button do">
+<label for="from">von</label> <select id="from">
+<option value="">----</option>
+<option value="1Mo" selected="selected">Anfang</option>
+<option value="Mt">NT Anf.</option>
+<option value="1Mo">1.Mo</option>
+<option value="2Mo">2.Mo</option>
+<option value="3Mo">3.Mo</option>
+<option value="4Mo">4.Mo</option>
+<option value="5Mo">5.Mo</option>
+<option value="Jos">Jos</option>
+<option value="Ri">Ri</option>
+<option value="Ruth">Ruth</option>
+<option value="1Sam">1.Sam</option>
+<option value="2Sam">2.Sam</option>
+<option value="1Koe">1.Kö</option>
+<option value="2Koe">2.Kö</option>
+<option value="1Chr">1.Chr</option>
+<option value="2Chr">2.Chr</option>
+<option value="Esr">Esr</option>
+<option value="Neh">Neh</option>
+<option value="Est">Est</option>
+<option value="Hiob">Hiob</option>
+<option value="Ps">Ps</option>
+<option value="Spr">Spr</option>
+<option value="Pred">Pred</option>
+<option value="Hld">Hld</option>
+<option value="Jes">Jes</option>
+<option value="Jer">Jer</option>
+<option value="Klgl">Klgl</option>
+<option value="Hes">Hes</option>
+<option value="Dan">Dan</option>
+<option value="Hos">Hos</option>
+<option value="Joel">Joel</option>
+<option value="Am">Am</option>
+<option value="Ob">Ob</option>
+<option value="Jona">Jona</option>
+<option value="Mi">Mi</option>
+<option value="Nah">Nah</option>
+<option value="Hab">Hab</option>
+<option value="Zeph">Zeph</option>
+<option value="Hag">Hag</option>
+<option value="Sach">Sach</option>
+<option value="Mal">Mal</option>
+<option value="Mal">AT Ende</option>
+<option disabled="disabled">-</option>
+<option value="Mt">NT Anf.</option>
+<option value="Mt">Mt</option>
+<option value="Mk">Mk</option>
+<option value="Lk">Lk</option>
+<option value="Joh">Joh</option>
+<option value="Apg">Apg</option>
+<option value="Roem">Röm</option>
+<option value="1Kor">1.Kor</option>
+<option value="2Kor">2.Kor</option>
+<option value="Gal">Gal</option>
+<option value="Eph">Eph</option>
+<option value="Phil">Phil</option>
+<option value="Kol">Kol</option>
+<option value="1Th">1.Th</option>
+<option value="2Th">2.Th</option>
+<option value="1Tim">1.Tim</option>
+<option value="2Tim">2.Tim</option>
+<option value="Tit">Tit</option>
+<option value="Phlm">Phlm</option>
+<option value="Hebr">Hebr</option>
+<option value="Jak">Jak</option>
+<option value="1Pt">1.Pt</option>
+<option value="2Pt">2.Pt</option>
+<option value="1Joh">1.Joh</option>
+<option value="2Joh">2.Joh</option>
+<option value="3Joh">3.Joh</option>
+<option value="Jud">Jud</option>
+<option value="Offb">Offb</option>
+<option value="Mt">NT Anf.</option>
+</select>
+<label for="to">bis</label> <select id="to">
+<option value="Mal">AT Ende</option>
+<option value="1Mo">1.Mo</option>
+<option value="2Mo">2.Mo</option>
+<option value="3Mo">3.Mo</option>
+<option value="4Mo">4.Mo</option>
+<option value="5Mo">5.Mo</option>
+<option value="Jos">Jos</option>
+<option value="Ri">Ri</option>
+<option value="Ruth">Ruth</option>
+<option value="1Sam">1.Sam</option>
+<option value="2Sam">2.Sam</option>
+<option value="1Koe">1.Kö</option>
+<option value="2Koe">2.Kö</option>
+<option value="1Chr">1.Chr</option>
+<option value="2Chr">2.Chr</option>
+<option value="Esr">Esr</option>
+<option value="Neh">Neh</option>
+<option value="Est">Est</option>
+<option value="Hiob">Hiob</option>
+<option value="Ps">Ps</option>
+<option value="Spr">Spr</option>
+<option value="Pred">Pred</option>
+<option value="Hld">Hld</option>
+<option value="Jes">Jes</option>
+<option value="Jer">Jer</option>
+<option value="Klgl">Klgl</option>
+<option value="Hes">Hes</option>
+<option value="Dan">Dan</option>
+<option value="Hos">Hos</option>
+<option value="Joel">Joel</option>
+<option value="Am">Am</option>
+<option value="Ob">Ob</option>
+<option value="Jona">Jona</option>
+<option value="Mi">Mi</option>
+<option value="Nah">Nah</option>
+<option value="Hab">Hab</option>
+<option value="Zeph">Zeph</option>
+<option value="Hag">Hag</option>
+<option value="Sach">Sach</option>
+<option value="Mal">Mal</option>
+<option value="Mal">AT Ende</option>
+<option disabled="disabled">-</option>
+<option value="Mt">NT Anf.</option>
+<option value="Mt">Mt</option>
+<option value="Mk">Mk</option>
+<option value="Lk">Lk</option>
+<option value="Joh">Joh</option>
+<option value="Apg">Apg</option>
+<option value="Roem">Röm</option>
+<option value="1Kor">1.Kor</option>
+<option value="2Kor">2.Kor</option>
+<option value="Gal">Gal</option>
+<option value="Eph">Eph</option>
+<option value="Phil">Phil</option>
+<option value="Kol">Kol</option>
+<option value="1Th">1.Th</option>
+<option value="2Th">2.Th</option>
+<option value="1Tim">1.Tim</option>
+<option value="2Tim">2.Tim</option>
+<option value="Tit">Tit</option>
+<option value="Phlm">Phlm</option>
+<option value="Hebr">Hebr</option>
+<option value="Jak">Jak</option>
+<option value="1Pt">1.Pt</option>
+<option value="2Pt">2.Pt</option>
+<option value="1Joh">1.Joh</option>
+<option value="2Joh">2.Joh</option>
+<option value="3Joh">3.Joh</option>
+<option value="Jud">Jud</option>
+<option value="Offb">Offb</option>
+<option value="Mal">AT Ende</option>
+<option value="Offb" selected="selected">Ende</option>
+<option value="">----</option>
+</select><label for="to">,</label>
+<label for="limit">maximal</label>
+<input id="limit" type="text"     class="text"   style="width: 2em; text-align: right" value="100"><label for="limit"> Fundstellen anzeigen<br></label>
+<input tabindex="-1" value="Alle Eingaben zurücksetzen"   type="button" class="button reset"            onclick="reset(); return false;" style="width: 17em">
+<input tabindex="-1" value="Bisherige Ergebnisse löschen" type="button" class="button result-highlight" onclick="clearR(); return false;" style="width: 18em">
+</form>
+</div>
+<noscript><span class="error">Damit die Suche funktioniert, bitte JavaScript <a href="http://jumk.de/javascript.html">aktivieren</a>.</span></noscript>
+				</div><!--header-->
+				<div id="results"></div>
+				<div id="footer">
+
+<div class="search">
+Es wird nur nach Wörtern und Zahlen und Teilen davon gesucht.
+Wortgrenzen werden durch Leerzeichen gekennzeichnet.
+So findet man mit &rsaquo;<span class="source"> Tag</span>&lsaquo;
+alle Wörter, die mit &rsaquo;<span class="source">Tag</span>&lsaquo; beginnen,
+z.B. das Wort &rsaquo;<span class="source">Tages</span>&lsaquo;.
+Um nur ganze Wörter zu finden, sollte man vor und nach ihnen ein Leerzeichen eingeben.
+</div>
+
+<div class="search">
+<i>Interpunktion</i>, also Satzzeichen, andere Sonderzeichen und Verweisangaben werden wie Leerzeichen behandelt.
+Aufeinanderfolgende Leerzeichen werden darüberhinaus als ein einzelnes Leerzeichen betrachtet.
+Die Reihenfolge der Angaben in der Suchanfrage ist maßgeblich,
+d.h. es wird generell nach <i>Phrasen</i> (Wortgruppen in der gegebenen Reihenfolge) gesucht.
+</div>
+
+<div class="search">
+Es wird jeweils versweise gesucht, d.h. Fundstellen können sich nicht über Versgrenzen erstrecken.
+Falls Suche im Metatext aktiviert ist, wird dabei allerdings die Überschrift unmittelbar
+vor einem Vers dem Vers zugerechnet und die Fußnoten des Verses als am Ende des Verses stehend betrachtet.
+</div>
+
+<div class="search">
+<i><b>Beispiel:</b></i><br>
+Die Suche nach
+dem Text &rsaquo;<b>Anfang</b>&lsaquo;
+nur mit &rsaquo;<b>Welt</b>&lsaquo;
+aber ohne &rsaquo;<b>Übersetzer</b>&lsaquo;
+inklusive Metatext<br>
+liefert 2 Fundstellen mit 3 Vorkommen,<br>
+wobei die Fundstelle 1. Mose 1,1 nur deswegen dabei ist,
+weil das Wort &rsaquo;Welt&lsaquo; in der Überschrift vorkommt<br>
+und die Einleitung von 1. Mose nur deswegen nicht dabei ist,
+weil in ihr das Wort &rsaquo;Übersetzer&lsaquo; vorkommt.
+</div>
+
+<p>
+
+<div class="search">
+Sollte nichts gefunden werden, liegt das möglicherweise an Unterschieden in der Formulierung von Suchanfrage und Bibeltext.
+In solchen Fällen kann eine online-Suche z.B. bei <a href="http://google.de/">Google</a>
+oder (nach Anmeldung) in einer oder mehreren Übersetzungen auf
+<a href="http://www.die-bibel.de/nc/online-bibeln/luther-bibel-1984/suche-im-bibeltext/">Die-Bibel.de</a> hilfreich sein.
+</div>
+
+<p>
+
+<div class="search">
+In den Suchtexten sind <a href="http://www.drweb.de/magazin/was-sind-regulare-ausdrucke/">Reguläre Ausdrücke</a> sind möglich:
+<ul>
+<li>&rsaquo;<span class="source">X?</span>&lsaquo; steht für möglicherweise ein &rsaquo;<span class="source">X</span>&lsaquo;.
+</li>
+<li>&rsaquo;<span class="source">X+</span>&lsaquo; steht für mindestens ein &rsaquo;<span class="source">X</span>&lsaquo; in Folge.
+</li>
+<li>&rsaquo;<span class="source">X*</span>&lsaquo; steht für eine beliebige Folge von &rsaquo;<span class="source">X</span>&lsaquo; (auch kein &rsaquo;<span class="source">X</span>&lsaquo;).
+</li>
+<li>&rsaquo;<span class="source">X{</span>n<span class="source">}</span>&lsaquo; steht für mindestens n aufeinanderfolgende &rsaquo;<span class="source">X</span>&lsaquo;.<br>
+So steht  &rsaquo;<span class="source">(Herr ){2}</span>&lsaquo; für eine Folge aus mindestens zwei &rsaquo;<span class="source">Herr </span>&lsaquo;.
+</li>
+<li>&rsaquo;<span class="source">.</span>&lsaquo; steht für ein beliebiges Zeichen.
+</li>
+<li>&rsaquo;<span class="source">\s</span>&lsaquo; steht für ein Leerzeichen.
+</li>
+<li>&rsaquo;<b>[</b>&lsaquo; und &rsaquo;<b>]</b>&lsaquo; begrenzen Zeichenaufzählungen.
+So steht &rsaquo;<span class="source">[aeiou]</span>&lsaquo; für einen Vokal.
+</li>
+<li>&rsaquo;<span class="source">^</span>&lsaquo; steht für den Versanfang. So steht
+&rsaquo;<span class="source">^a</span>&lsaquo; für alle Stellen, die mit &rsaquo;<span class="source">a</span>&lsaquo; beginnen.
+</li>
+<li>&rsaquo;<span class="source">$</span>&lsaquo; steht für das Versende.
+</li>
+<li>Alternativen werden durch &rsaquo;<span class="source">|</span>&lsaquo; getrennt, zum Beispiel &rsaquo;<span class="source"> daheim | zu Hause </span>&lsaquo;.
+</li>
+<li>&rsaquo;<b>(</b>&lsaquo; und &rsaquo;<b>)</b>&lsaquo; dienen der Gruppierung.<br>
+So steht &rsaquo;<span class="source">[0-9]+(.[0-9]+)?</span>&lsaquo; für eine Zahl aus möglicherweise mehreren Ziffern und einem Dezimalzeichen.
+</li>
+</ul>
+</div>
+
+<div class="search">
+<i><b>Beispiel:</b></i><br>
+Mit dem Suchtext &rsaquo;<b>G.* sprach es (werde|sol{2}en) L[iach]+t</b>&lsaquo; findet man:
+<ul>
+<li>Und <span class="highlight">Gott sprach: Es werde Licht</span>! ...</li>
+<li>Und <span class="highlight">Gott sprach: Es sollen Licht</span>er ...</li>
+</ul>
+</div>
+
+				</div><!--footer-->
+			</div><!--content-->
+			<div class="bible_copyright"><a href="http://validator.w3.org/check?uri=referer"><img src="images/html5.png" alt="[Valid HTML5]" height="12" width="33"></a>
+			&nbsp; Bibeltext der Schlachter Copyright &copy; 2000 <A HREF="http://www.bibelgesellschaft.com/">Genfer Bibelgesellschaft</A>. Wiedergegeben mit freundlicher Genehmigung. Alle Rechte vorbehalten.</div>
+		</div><!--main-->
+	</div><!--page-->
+<script type="text/javascript">
+loadIndex();
+//items = document.getElementsByTagName("item"); //TODO umlauts/UTF8
+/*
+var item = items[1];
+//debug(item.innerHTML);
+//document.writeln(inspect(item,2));
+debug(getchapter(item));
+debug(getVerse(item));
+*/
+</script>
+</body>
+</html>

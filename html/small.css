@@ -1,0 +1,47 @@
+body {
+	overflow: visible;
+}
+
+div#menu {
+	position: relative;
+}
+
+div#page {
+	position: relative;
+	overflow-y: visible;
+	top: auto; /* unset value */
+	bottom: auto; /* unset value */
+}
+
+div.trigger {
+	background-color: transparent;
+}
+
+div#content {
+	padding:		0.5%;
+}
+
+span#book, /*.chap_link,*/ .backward {
+/*	float:			none;*/
+}
+span#planinfo, /*.chap_jump,*/ .forward {
+	float:			none;
+}
+/* see also scrpts.js: quick = '<div>'+quick+'</div>';	// workaround for forcing line breaking for pinch-to-zoom on Android */
+.chap_jump {
+	float:			none; /* "none" does not work for webkit, use inherit? */
+}
+.chap_nav, .book_nav {
+	line-height:		2em; /* for better usability */
+}
+/*
+div#header .chap_nav{
+	margin-top:		5.5em;
+}
+div#footer .chap_nav{
+	margin-bottom:		5em;
+}
+*/
+span.spot {
+	position:			absolute;
+}

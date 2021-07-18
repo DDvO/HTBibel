@@ -1,0 +1,8 @@
+#http://code.google.coms/p/android-apktool/
+cd ~/sys/software/HTBibel
+apktool decode /home/david/A/apk/HTBibel-1.44.apk HTBibel
+#in HTBibel, edit version info in AndroidManifest.xml, update assets/www/
+find HTBibel -name '*~'|xargs rm
+apktool build HTBibel HTBibel-1.45.apk
+jarsigner -sigalg SHA1withRSA -digestalg SHA1 -verbose HTBibel-1.45.apk DvO
+zipalign -f -v 4 HTBibel-1.45.apk HTBibel.apk

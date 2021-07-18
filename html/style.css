@@ -1,0 +1,705 @@
+/*@import "color.css";*/
+
+body {
+/*overflow:			hidden; *//* disable outer scroll bar */
+	margin:				0px 0px 2% 0px;
+	background-color:	#ffcc00;
+	font-family:	Arial,Helvetica,Geneva,sans-serif;
+	font-size:		20px; /* 120% */
+	line-height:	1.4em;
+}
+body, div.trigger {
+	background-color:	#ffcc00;
+}
+
+div#menu {
+/*	z-index:				2; *//* such that page, including footnotes, can move below it */
+	position:				fixed; /* for non-small diplays */
+	left: 0; right: 0; /* width: 100%;*/
+	border-left:		6pt; border-right: 6pt; /*1%*/ /* same as trigger width */
+	border-top:			2px;
+	border-bottom:	4px;
+	border-style:		solid;
+	border-color:		#ffcc00; /* same as body.background-color */
+	padding:    		2px;
+}
+
+div#page {
+/*	display:	table; *//* http://css-tricks.com/fluid-width-equal-height-columns */
+	width:     	100%;  /* auto-adapts to visible area, also on Anroid */
+	position:  	fixed; /* for non-small diplays, does not scroll away, important when using # */
+	overflow-y:	auto;/*scroll*/ /*visible*/ /* vertical scroll bar on demand */
+	top:       	2.2em; /* for non-small diplays, set by JS; default main top suitable if div#menu height is one line */
+	bottom:    	0; /* important for scrolling of main to give height, optimally relative to bottom */
+}
+
+div#main {
+	/*display: table-cell;*/
+	/*position: relative;*/
+	/*height: 100%;*/
+	/*bottom: 0;*/ /** important for scrolling to give height, optimally relative to bottom;
+	          set by JS (not done statically here because of Android browser bug at least on small displays)
+	          http://code.google.com/p/android/issues/detail?id=2911 **/
+}
+
+div#content {
+	color:			#000000; /* black */
+	background-color:	#f6f6f6;
+	padding:		1.5em;
+	overflow:		visible; /* for footnotes */
+}
+
+div#header, div#footer, div.menupad, span.footnote_box, span.footnote_expand {
+	background-color:	#fde6b6;
+}
+div#header, div#footer{
+	color:		#000000;
+	padding:		5px;
+}
+div#header{
+	margin-bottom:		0.75em;
+}
+div#footer{
+	margin-top:		0.75em;
+}
+
+div#wait{
+	color:					#aa1111;
+}
+span.error {
+	color:					#dd1111;
+	font-weight:		bold;
+	padding-bottom:	1em;
+}
+
+div.bible_copyright, div.bible_copyright a {
+	color:				#998877; /* #bbaa99; */
+}
+div.bible_copyright{
+	border-top:		1px solid #998877; /* #bbaa99; */
+	margin-top:		0px;
+	padding:			5px;
+	font-size:		0.6em;
+	line-height:	1em;
+/*	text-align:		center;*/
+}
+
+span.balloon {
+	padding:			3pt;
+	position:			fixed; /*absolute;*/
+	bottom:				0;
+	right:				0;
+	font-size:		1.2em;
+/*font-weight:	bold;*/
+	color:				#005CB4;
+	text-shadow: 2px 2px 0px #000;
+/*	color: rgba(0, 92, 180, 0.6);*/
+}
+span.balloon, span.spot {
+	z-index:			2; /* such that page, including footnotes, can move below it */
+}
+span.spot {
+	width:				2em;
+	height:				4em;
+	padding-top:	1em;
+	position:			fixed; /*absolute;*/
+	top:					40%;
+/*	vertical-align:		middle; */
+	font-size:		1.2em;
+	font-weight:	bold;
+	text-align:		center;
+	line-height:	1.4em;
+	color:				#005CB4;
+/*	color: rgba(0, 92, 180, 0.6);*/
+}
+/*span.spot:hover see span.footnote:hover*/
+span#spotL {
+	left:					5px;
+}
+span#spotR {
+	right:				5px;
+}
+
+div.trigger {
+	/*display:	table-cell;*/
+	z-index: 2;
+	position: absolute;
+	top: 0;
+	height: 100%;
+	width:		6pt; /*1%*/ /* same as menu side margins */
+/** for some weird reason, some background needed for IE to show trigger */
+/**	background: url(images/t3.gif) 0 0 repeat-y; /t3.gif is transparent! */
+	/*background-color: #bb3300;*/
+/*http://css-tricks.com/css-transparency-settings-for-all-broswers/*/
+/*filter:alpha(opacity=10); -moz-opacity:0.1; -khtml-opacity: 0.1; opacity: 0.1;*/
+}
+div.trigger:hover { /*spot or hint*/
+/*does not work: visibility: visible;*/
+}
+div#triggerL{
+	left: 0%;
+}
+div#triggerR{
+	right: 0%;
+}
+
+div.menu {
+	display:	none; /* initially */
+	position: absolute; /* trick to force independent rendering */
+}
+div#uppermenuL, div#uppermenuR {
+	top:		1.3em; /* do not set too high, we need a mouse bridge to trigger */
+}
+div#menuL {
+	left:		0.5%;
+}
+div#menuR {
+	right:	0.5%;
+}
+div.menupad {
+	z-index:			3; /* such that page, including footnotes, can move below it */
+	font-weight:	normal;
+	line-height:	1.4em;
+	font-size:		1.0em;
+	text-align:		left;
+	border:				2px solid #63829D;
+	margin-top:		0px;
+	font-size:		1.2em;
+	padding:			2px 4px 2px 4px;
+/*	font-size:		14px;*/ /* forced to fit with background images */
+/*	line-height:		18px;*/ /* forced to fit with background images */
+}
+span.menutop{
+/*margin-top: 2px;*/
+	padding-right:		0em;
+	display: inline-block;
+	font-weight:		bold;
+}
+span#markers {
+	padding-right: 0.3em;
+}
+span.middot:before{
+	color: #444444;
+	content: "·";
+	padding-right: 0.3em;
+}
+/*span.middot{
+	padding-left:		0.6em;
+	padding-right:		0.1em;
+	background-image:	url('images/middot.gif');
+	background-repeat:	no-repeat;
+	background-position:	center left;
+}*/
+span#passage{
+	padding-right:		0.4em;
+}
+/*span.menutop, */span#plan {
+	white-space:		nowrap;
+}
+div.menusection{
+	padding:		4px;
+}
+div.menupad ul{
+	list-style:		none;
+	margin:			0;
+	padding:		0;
+}
+div.menupad a, div.menupad span.active{ /* such that background (and trigger area) extends 2px more */
+	padding:		2px;
+}
+form{
+}
+div.menupad a.active, div.menupad span.active{
+	background-color:	#f9f9f9;
+/*	color:			#445566; */
+	color:			#993300;
+/*	font-weight:		bold; would make it wider */
+}
+div.menupad li{
+/*	width:			151px;*/
+	vertical-align:		top;
+}
+div.menupad span.tree0, div.menupad span.tree1, div.menupad span.tree2, div.menupad span.tree3, div.menupad span.tree4{
+	display:		block;
+	margin-left:		0.2em;
+	margin-right:		0.2em;
+	background-repeat:	repeat-y;
+	background-position:	top left;
+					/* Compensation for IE7 misbehavior: */
+	padding-bottom:		4px; /* force left background image overlap to bottom */
+	margin-bottom:	 -4px;
+}
+div.menupad span.tree0{
+	background-image:	url('images/t0.gif');
+}
+div.menupad span.tree1, div.menupad span.tree2 {
+	padding-right: 0.2em;
+}
+div.menupad span.tree1:before, div.menupad span.tree2:before {
+	color: #444444;
+	content: "·";
+	padding-right: 0.2em;
+}
+/*
+div.menupad span.tree1:before{
+	background-image:	url('images/t1.gif');
+}
+div.menupad span.tree2{
+	background-image:	url('images/t2.gif');
+	background-position:	center left;
+}
+*/
+div.menupad span.tree3{
+/*	background:		none;*/
+	background-image:	url('images/t3.gif');
+	background-repeat:	no-repeat;
+}
+div.menupad span.tree4{
+	background-image:	url('images/t4.gif');
+	background-repeat:	no-repeat;
+}
+/* unsed
+div.menusection1{
+	color:             #333333;
+	border-left-color: #333333;
+}*/
+div.menusection2{
+	color:                  #993300;
+	border-left-color:      #993300;
+}
+
+
+div#plantable {
+	margin-bottom:		0.75em;
+}
+th, tr {
+	vertical-align:		top;
+	padding-right:	1em;
+}
+div#plantable th {
+	text-align:		right;
+}
+div#plantable tr.left th{
+	text-align:		left;
+}
+
+div#plantable a, div.menupad a, div#breadcrumbs a, .chap_jump a, .chap_nav a{
+	text-decoration:	none;
+}
+div#plantable a:hover, div.menupad a:hover, div#breadcrumbs a:hover, .chap_jump a:hover, .chap_nav a:hover{
+	text-decoration:	underline;
+}
+span.arrow{
+	font-size:		1.5em;
+	padding-left: 		0.1em;
+	padding-right:		0.1em;
+}
+div.search{
+	margin:			0 0 1em 0;
+}
+div.intro{
+	margin:			0 0 1em 0;
+	font-weight:		bold;
+}
+div.intro ul li img{
+	vertical-align:		middle;
+	height:			1.5em;
+	width:			1.5em;
+}
+a, .pseudo-a {
+	color:			#005CB4;
+}
+a {
+	text-decoration:	underline;
+}
+h1{
+	font-family:		Georgia,Garamond,"Times New Roman",Times,serif;
+	font-size:		1.8em;
+	font-weight:		normal;
+	margin-bottom:		0.7em;
+	padding-bottom:		0px;
+	margin-top:		1em;
+	color:			#993300;
+	line-height:		1.2em;
+	clear:			both;
+	width:			1200px; /* enables zoom out; workaround for PhoneGap WebView bug ignoring viewport width */
+}
+h2{
+	font-family:		Georgia,Garamond,"Times New Roman",Times,serif;
+	font-size:		1.5em;
+	font-weight:		normal;
+	margin-bottom:		1em;
+	margin-top:		1.5em;
+	color:			#445566;
+	clear:			left;
+	line-height:		1.2em;
+}
+h3{
+	font-family:		Georgia,Garamond,"Times New Roman",Times,serif;
+	font-size:		1.3em;
+	font-weight:		normal;
+	margin-bottom:		0.5em;
+	margin-top:		1.5em;
+	color:			#667788;
+}
+h4{
+	font-family:		Arial,Helvetica,Geneva,sans-serif;
+	font-size:		1em;
+	font-weight:		normal;
+	margin-bottom:		0.6em;
+	margin-top:		0.4em;
+	padding-bottom:		5px;
+	color:			#667788;
+	letter-spacing:		0.1em;
+	border-bottom:		1px solid #b1b6af;
+}
+h2.st{
+	font-weight:		normal;
+	font-size:		1.1em;
+	font-variant:		small-caps;
+}
+h2.ct{
+	font-weight:		normal;
+	font-size:		1.2em;
+	font-style:		italic;
+}
+p.cr{
+	font-size:		0.8em;
+}
+p.cr a{
+	text-decoration:	none;
+}
+p.cr a:hover{
+	text-decoration:	underline;
+}
+
+.verse-highlight{
+	background-color:	#F8CFCB !important; /* #EFAFAB; */
+}
+span.versenum {
+	vertical-align:		top;
+	font-weight:		bold;
+	white-space:		nowrap;
+	padding-right:		0.5em;
+}
+span.versenum, div.chap_num {
+	color:			#80CCE4; /* #005CB4; */ /* #bbaa99; */
+}
+a.verseref {
+	white-space:		nowrap;
+}
+ul.contentlist li a.verseref {
+	white-space:		inherit;
+}
+
+div.para span.versenum{
+	font-size:		0.6em;
+}
+/* see http://www.lingihuang.com/viviancrap/archives/category/web-design/css/
+   http://stackoverflow.com/questions/2185078/non-selectable-text-in-html-table
+   IE workarounds do not help if selection starts outside the element
+   (http://stackoverflow.com/questions/4448671/making-things-unselectable-in-ie  use attribute unselectable="on")
+   (http://forums.hscripts.com/viewtopic.php?f=4&t=3293 onselectstart="return false;")
+   http://www.tek-tips.com/viewthread.cfm?qid=1184318
+   http://help.dottoro.com/lhwdpnva.php
+*/
+.nonselect, form, div#menu, div#breadcrumbs, .book_nav, .chap_nav, div.bible_copyright,
+div.chap_num, h2.st, h2.ct, p.sr, p.cr, span.versenum, span.footnote, /*div#header, */div#footer{
+	user-select: none; /* not understood by Firefox */
+	-moz-user-select: -moz-none; /* For Firefox */
+	-khtml-user-select: none; /* For Safari */
+	-o-user-select: none; /* For Opera */
+	-webkit-user-select: none;
+	behavior: url(../unselectable.htc) url(unselectable.htc); /* not standards-conform workaround for IE,
+ does not help if selection starts outside the element: http://msdn.microsoft.com/en-us/library/ms534706%28VS.85%29.aspx */
+/* http://msdn.microsoft.com/en-us/library/ie/ms530723%28v=vs.85%29.aspx */
+}
+/* use CSS rather than HTML to include images http://drupal.org/node/180173
+ but background-image does not scale :-( http://www.alistapart.com/articles/supereasyblendys/
+*/
+/*unused:*/
+.versenum img{
+/*	vertical-align:		middle; */
+	height:			0.9em;
+}
+/*http://stackoverflow.com/questions/7614928/change-br-height-using-css
+does not work:
+br.noheight {
+	display:		none;
+	line-height:		0px;
+}*/
+span.text, input.text{
+	font-family:		inherit;
+	font-size:		0.9em; /* workarouind for IE http://viralpatel.net/blogs/2009/09/setting-height-selectbox-combobox-ie.html */
+/*	color:			inherit;*/
+	background-color:	#f9f9f9;
+	font-weight:		normal;
+	padding-left:		3px;
+	padding-right:		3px;
+/*	border:			1px solid #c7c1a1;*/
+	vertical-align:		middle;
+	margin:			0px;
+/* http://stackoverflow.com/questions/4767924/how-to-allow-text-selection-of-a-div-but-prevent-the-text-selection-of-the-fath */
+	user-select: text; /* not understood by Firefox */
+	-moz-user-select: text; /* For Firefox */
+	-khtml-user-select: text; /* For Safari */
+	-o-user-select: text; /* For Opera */
+	-webkit-user-select: text;
+	behavior: url(../selectable.htc) url(selectable.htc); /* not standards-conform workaround for IE, does not work for menu */
+}
+input.button{
+	vertical-align:		middle;
+	line-height: 1em;
+/*	border:			1px solid #888888;*/
+	font-size:		0.8em;/* as compromise for nasty IE; does not work: padding: 0; overflow: visible;*/
+	font-weight:		bold;
+	text-align:		center;
+/*margin:			4px;*/
+	color:			#ffffff;
+}
+input.reset{
+	background-color:	#C7C1B1;
+}
+input.do {
+	background-color:	#993300;
+}
+input.go{
+	background-color:	#FFbb44 !important;
+}
+span.balloon, span.spot, span.footnote:hover, span.footnote_close{
+/*http://robertnyman.com/2010/01/11/css-background-transparency-without-affecting-child-elements-through-rgba-and-filters/*/
+/*	background: rbg (#50,#CC,#FF    );*/ /*#ff7777;*/
+background: rgb(80, 204, 255); /* fallback for IE7 */
+background: rgba(80, 204, 255, 0.4); /*semi-transparent*/
+/*http://jonraasch.com/blog/css-rounded-corners-in-all-browsers*/
+    -moz-border-radius: 6px; /* Firefox */
+    -webkit-border-radius: 6px; /* Safari and chrome */
+    -khtml-border-radius: 6px; /* Linux browsers */
+    /* does not work: -o-border-radius: 6px;  Opera */
+    /*IE7 hack does not work: behavior:url(images/border-radius.htc); position: relative;*/
+    border-radius: 6px; /* CSS3 */
+}
+span.footnote_expand {
+	display: inline;
+}
+span.footnote/*, span.footnote_box, span.footnote_close, span.footnote_mark, span.footnote_expand*/ {
+	color:						#995500;
+}
+span.footnote.alt {
+	color:						#553300;
+}
+span.footnote, span.footnote_close, span.footnote_mark {
+	text-decoration:	none;
+	font-size:				0.8em;
+/*vertical-align:		top;*/
+/* http://csscreator.com/node/732 Subscript and Superscript  */
+	vertical-align:		baseline;
+	position:					relative;
+	top:							-0.4em;
+}
+/* unused
+sup{
+	font-size:1.3em;
+	vertical-align:		top;
+}
+sub{
+	font-size:1.3em;
+	vertical-align:		bottom;
+}
+*/
+span.footnote br {
+	display:					none;
+}
+span.footnote {
+	padding-left:			1px;
+	padding-right:		1px;
+}
+.container {
+/* for correct calculation of posXY() in webkit: */
+	position:	absolute;
+}
+span.footnote_box {
+	display:					none; /* initially */ /* visibility:		hidden; */
+	z-index: 					1;		/* always / initially */
+	font-style:				normal;
+	position:					absolute;
+	top:							1.9em;
+	left:							-9em;
+	width:						18em;
+/*overflow:					visible;  useless */
+	padding:					0.5em;
+	margin:						0px;
+	border:						1px solid #995500;
+}
+
+span.source {/* .tt */
+	font-family:		monospace;
+	font-weight:		bold;
+/*	border:			1px solid #c7c1a1;
+	background-color:	#ffffff;
+	padding:		0px 2px 0px 2px;
+*/
+}
+div.contents {
+	margin:			5px 0px 5px 0px;
+}
+ul.contentlist{
+	list-style-type:	circle;
+	padding-left:		5px;
+	margin-right:		1.5%;
+	margin-left:		1.5%;
+	margin-top:		5px;
+	margin-bottom:		5px;
+}
+ul.contentlist li{
+	padding-left:		5px;
+	margin-left:		5px;
+	margin-bottom:		2px;
+}
+div.twocols1{
+	float:			left;
+	padding-left:		1%;
+	margin-right:		1%;
+	padding-right:		1%;
+	border-right:		1px solid #c7c1a1;
+/*	width:			320px;*/
+}
+div.twocols1, div.twocols2{
+	margin-top:		2%;
+}
+div.twocols2{
+	float:			right;
+	margin-right:		0.5px;
+/*	width:			460px;*/
+}
+div.twocols1 h2,div.twocols2 h2{
+	margin-top:		0px;
+}
+.book_nav{
+    line-height: 1.9em; /* just for IE7 */
+}
+div#breadcrumbs, .book_nav {
+	font-size:	0.9em; /* for small displays */
+	margin:			0;
+}
+div#breadcrumbs, .book_nav, .chap_nav {
+/*clear:			both; http://www.quirksmode.org/css/clearing.html */
+	overflow:	hidden;
+	width:		auto;
+}
+div#breadcrumbs span.current, .important{
+	font-weight:		bold;
+}
+.important{
+	color:			#993300;
+}
+span.current, h1.chapter, .quick{
+	white-space:		nowrap;
+}
+.chap_link, .chap_dots {
+/*display: inline;*//*float:			none;*/
+	display: inline-block;
+	margin-right:		5px;
+	margin-bottom:	5px;
+width:					3em;
+/*	padding: 0.3em 0.8em;  *//* on Android, gets clipped on the right if at end of line */
+/*	line-height: 2em; */
+	text-align:			center;
+}
+.chap_link {
+	border:						1px solid #005CB4;
+	color:						#005CB4;
+	background-color:	#fbf8e8;
+}
+.chap_link a{
+	text-decoration:	none;
+/*	width:			1.9em;*/
+	padding:		0px 3px 0px 3px;
+}
+.chap_links .active{
+	border:			1px solid #993300;
+	color:			#993300;
+	font-weight:		bold;
+}
+span#book, /* ignored for float: left of chap_jump:*/.chap_links, .backward {
+	margin-right:		1em;
+}
+span#book, .chap_link, .chap_dots, .backward{
+/*	float:			left;*/
+}
+.forward{
+	margin-left:		1em;
+}
+span#planinfo, .chap_jump, .forward{ /*IE7 bug? span.quick must not have float:right; */
+	float:			right;
+}
+.nowrap, span#plandate/*span#book, span#planinfo*/, .backward a, .forward a{
+	white-space:		nowrap;
+}
+/* http://terrainformatica.com/forums/topic.php?id=1845 CSS: Set option height */
+select, select caption, option{
+	vertical-align:		middle;
+  -webkit-appearance: menulist-button; /* workaround for Google Chrome http://stackoverflow.com/questions/2547354/how-to-increase-the-height-of-the-select-box */
+	font-size:		0.9em; /* workarouind for IE http://viralpatel.net/blogs/2009/09/setting-height-selectbox-combobox-ie.html */
+/*http://stackoverflow.com/questions/490036/setting-the-height-of-a-select-in-ie*/
+/*
+	line-height:	48px;
+	padding-top:		0.1em;
+	padding-bottom:		0.1em;
+*/
+	font-weight:		normal;
+	padding-right:		0.1em;
+	line-height:	2.5em;
+}
+.quick select, .quick select caption, .quick option {
+	text-align:		right;/* ignored on webkit/Android */
+}
+.quick select {
+	height:			2.4em;
+/*vertical-align: middle; is ignored; workaround: */
+	padding-top   : 0.4em; /* for Firefox, should be off for IE */
+	padding-bottom: 0.4em; /* for Firefox, should be off for IE */
+}
+.chap_nav{
+/*	font-size:		0.9em;*/
+	padding:		1px;
+/*	text-align:		center;*/
+/* 	margin-bottom:		1em;*/
+}
+div#header .chap_nav{
+	margin-top:		1em;
+}
+div#footer .chap_nav{
+	margin-bottom:		1em;
+}
+div.chap_num{
+	font-family:		"Times New Roman",Times,Garamond,serif;
+	font-weight:		normal;
+	padding:		0px;
+	margin:			-5px 9px 0px 0px;
+	vertical-align:		bottom;
+	float:			left;
+	font-size:		4em;
+	line-height:		1.1em;
+}
+span.smallcaps{
+/*	display:		inline;*/
+	font-family:		"Times New Roman",Times,Garamond,serif;
+	font-variant:		small-caps;
+}
+p{
+	margin:			0 0 1em 0;
+}
+div.intro ul{
+	list-style:		none;
+}
+div.intro ul li img{
+	margin:			0.1em;
+}
+img{
+	border:			none;
+}
+
+wbr:after { /* needed for for opera */
+	content:		"\00200B"
+}
