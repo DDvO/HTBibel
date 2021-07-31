@@ -15,7 +15,8 @@ body, div.trigger {
 div#menu {
 /*	z-index:				2; *//* such that page, including footnotes, can move below it */
 	position:				fixed; /* for non-small diplays */
-	left: 0; right: 0; /* width: 100%;*/
+	left: 0; right: 0;
+	width:     	100%;  /* auto-adapts to visible area, except on zoomed view on Android */
 	border-left:		6pt; border-right: 6pt; /*1%*/ /* same as trigger width */
 	border-top:			2px;
 	border-bottom:	4px;
@@ -26,7 +27,7 @@ div#menu {
 
 div#page {
 /*	display:	table; *//* http://css-tricks.com/fluid-width-equal-height-columns */
-	width:     	100%;  /* auto-adapts to visible area, also on Anroid */
+	width:     	100%;  /* auto-adapts to visible area, except zoomed view on Android */
 	position:  	fixed; /* for non-small diplays, does not scroll away, important when using # */
 	overflow-y:	auto;/*scroll*/ /*visible*/ /* vertical scroll bar on demand */
 	top:       	2.2em; /* for non-small diplays, set by JS; default main top suitable if div#menu height is one line */
@@ -87,8 +88,8 @@ div.bible_copyright{
 span.balloon {
 	padding:			3pt;
 	position:			fixed; /*absolute;*/
-	bottom:				0;
-	right:				0;
+	bottom:				0px;
+	right:				0px;
 	font-size:		1.2em;
 /*font-weight:	bold;*/
 	color:				#005CB4;

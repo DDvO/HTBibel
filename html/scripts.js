@@ -16,8 +16,8 @@ importCSS(localURL('custom.css'));
 //http://developer.android.com/reference/android/webkit/WebView.html
 var pixelRatio = (window.devicePixelRatio ? window.devicePixelRatio : 1);
 // http://stackoverflow.com/questions/5021090/screen-width-android
-smallDisplay = (Math.min(screen.width, screen.height)/pixelRatio <= 600 // e.g. Android phone
-								|| onAndroid); // some Android browers initially give wrong values for screen.height/width
+var smallDisplay = (Math.min(screen.width, screen.height)/pixelRatio <= 600 // e.g. Android phone
+		    || onAndroid); // some Android browers initially give wrong values for screen.height/width
                    // Chrome gets the coordinates wrong : too large!
 if(smallDisplay) {
   // scroll the whole page
@@ -169,7 +169,7 @@ function inspect(obj, maxLevels, level)
 */
 
 //adapted from http://javascript.about.com/library/bldom08.htm
-function getElementsByClassName (n,cl) {
+function getElementsByClassName (n, cl) {
   var retnode = [];
   var myclass = new RegExp('\\b'+cl+'\\b');
   var elem = n.getElementsByTagName('*');
@@ -514,6 +514,7 @@ function initpage(chapnum,lastchap,planindex) {
 			page.style.width=(header.offsetWidth*1.7)+"px";
 		else if(document.getElementById('index_new'))
 			page.style.width=(header.offsetWidth*1.6)+"px";
+		/* on Android, overridden by fix_visible_on_zoom(): */
 		else if(document.getElementById('plantable'))
 			page.style.width=(header.offsetWidth*1.0)+"px";
 	}
@@ -539,20 +540,48 @@ function initpage(chapnum,lastchap,planindex) {
     adapt_page_top();
     window.onresize = adapt_page_top;
   }
-  if (onAndroid) {  // workaround for partly missing browser text re-flow on Android"
-    var innerWidth = 0;
-    var text_reflow = function () {
-      if (window.innerWidth != innerWidth) {
-	innerWidth = window.innerWidth;
-	document.getElementsByTagName('body')[0].style.width = innerWidth+'px';
+  if (window.visualViewport) { // force browser text re-flow on zoomed view on Android and iOS
+    var lastWidth = 0; // could be: window.innerWidth
+    var lastHeight = 0; // could be: window.innerHeight
+    var lastRight = 0; // could be: window.innerWidth
+    var lastBottom = 0; // could be: window.innerHeight
+    var fix_visible_on_zoom = function () {
+    var width = window.visualViewport.width; // static: window.innerWidth
+    var height = window.visualViewport.height; // static: window.innerHeight
+// pixelRatio
+// screen.width == window.outerWidth
+// screen.height   window.outerHeight
+// window.innerWidth window.innerHeight
+// https://developer.mozilla.org/en-US/docs/Web/API/Visual_Viewport_API
+// window.visualViewport.width      window.visualViewport.height
+// window.visualViewport.offsetLeft window.visualViewport.offsetTop
+     if (width != lastWidth) {
+       lastWidth = width;
+       document.getElementById('menu').style.width = width + 'px';
+       if (!document.getElementById('index_old') &&
+           !document.getElementById('index_new'))
+         document.getElementById('page').style.width = width + 'px';
       }
+     var balloon = getElementsByClassName(document, 'balloon')[0];
+     var right = width + window.visualViewport.offsetLeft;
+     var bottom = height + window.visualViewport.offsetTop;
+     if (right != lastRight) {
+       lastRight = right;
+       if (balloon)
+         balloon.style.right = (window.innerWidth - right)+'px';
+     }
+     if (bottom != lastBottom) {
+       lastBottom = bottom;
+       if (balloon)
+         balloon.style.bottom = (window.innerHeight - bottom)+'px';
+     }
     };
     document.body.style.zoom = "100%";
-    text_reflow();
-    setInterval(text_reflow, 500);
+    fix_visible_on_zoom();
+    setInterval(fix_visible_on_zoom, 100);
     /* would also work:
-      window.onresize = text_reflow;
-      addListener(window, 'touchstart', function (e) { text_reflow(); });
+      window.onresize = fix_visible_on_zoom;
+      addListener(window, 'touchstart', function (e) { fix_visible_on_zoom(); });
     */
   }
 }
@@ -622,7 +651,7 @@ function initmenus() {
 
 var footnotedelay = 500;
 function initfootnotes(node) {
-  var fns = getElementsByClassName(node,'footnote');
+  var fns = getElementsByClassName(node, 'footnote');
   var f  = function (e) { footnote(footnotedelay, e) };
   var f0 = function (e) { footnote(0            , e) };
   for(var i = 0; i < fns.length; i++) {
@@ -805,7 +834,7 @@ function initquick(id,chapnum,lastchap) {
   quickchap += '</select>\n';
   var quickverse = "";
   if(chapnum == 0) {
-    var book_nav1 = getElementsByClassName(document,'book_nav')[0];
+    var book_nav1 = getElementsByClassName(document, 'book_nav')[0];
     if(book_nav1)
       book_nav1.innerHTML = '<span class="chap_links">'+links+'</span>\n' + book_nav1.innerHTML;
     else
@@ -967,7 +996,7 @@ function initpassage() { // must be done after initmarkers()
       var id=path.match(/(\w+)\.html/)[1];
     } catch(e)
       { id="index"; } // root URL with implicit index.html
-    var actives=getElementsByClassName(document,'active');
+    var actives=getElementsByClassName(document, 'active');
     for (var i=0; i<actives.length; i++)
       actives[i].className="";
     child(document.getElementById(id), 'a', null).className="active";
