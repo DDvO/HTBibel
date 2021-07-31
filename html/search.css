@@ -30,6 +30,6 @@ h2.st, h2.ct, span.versenum, span.footnote_expand{
 	-khtml-user-select: text; /* For Safari */
 	-o-user-select: text; /* For Opera */
 	-webkit-user-select: text;
-/*behavior: url(../selectable.htc) url(selectable.htc);*/
+/* behavior: url(../selectable.htc) url(selectable.htc); */
 	behavior: none;
 }
